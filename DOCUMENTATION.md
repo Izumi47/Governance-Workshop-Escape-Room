@@ -34,11 +34,8 @@ Then visit `http://localhost:8080`.
 On older PowerShell, avoid `&&`; run commands separately or use `;`.
 
 ### Deployment
-Host the folder as static files on:
-- **Vercel** (planned — see §19)
-- GitHub Pages
-- SharePoint
-- Azure Static Web Apps
+- **Vercel** (primary — see §17) — repo: `Izumi47/Governance-Workshop-Escape-Room`
+- GitHub Pages, SharePoint, Azure Static Web Apps (alternatives)
 
 Share one link; attendees play on phones or laptops.
 
@@ -51,6 +48,7 @@ governance-activity2/
 ├── index.html                  # All screens + layout shell + meta/OG tags
 ├── favicon.svg                 # Browser tab icon
 ├── og-image.svg                # Social preview image (needs absolute URL when deployed)
+├── .gitignore                  # Excludes secrets, .env, internal docs (*.docx)
 ├── DOCUMENTATION.md            # This file
 ├── css/
 │   ├── styles.css              # Core theme, bomb, layout, explosion
@@ -62,6 +60,11 @@ governance-activity2/
     ├── ui.js                   # Progress map, debrief, confetti, leaderboard visibility
     └── sounds.js               # Web Audio effects (no MP3 files)
 ```
+
+### Not in Git (via `.gitignore`)
+- `Governance for Python & Power BI - Draft v1.docx` and other `*.docx` / `*.pdf`
+- `.env`, credentials, `.vercel` local folder
+- See §16 for full ignore list
 
 ---
 
@@ -315,8 +318,8 @@ practice: {
 - `wireColor` per chamber
 - `--bomb-layout-share` in CSS
 
-### Not in repo
-- Original `Governance for Python & Power BI - Draft v1.docx` was referenced but not in the workspace; questions were written as generic governance examples.
+### Not in Git
+- `Governance for Python & Power BI - Draft v1.docx` — local only (gitignored); use it to author questions in `questions.js`
 
 ---
 
@@ -341,7 +344,7 @@ https://your-site.vercel.app/?facilitator=1
 | `vault-leaderboard` | Top 10 scores `{ name, score, tier, date }` — **only written when leaderboard is visible** (facilitator or `showToUsers: true`) |
 | `vault-sound-muted` | `"1"` if muted |
 
-**Important:** Leaderboard data is **per browser, per device**. Attendees on separate laptops do not share rankings unless a backend is added (see §19).
+**Important:** Leaderboard data is **per browser, per device**. Attendees on separate laptops do not share rankings unless a backend is added (see §17).
 
 ---
 
@@ -376,9 +379,106 @@ No other code changes needed to re-enable for everyone.
 ### Kiosk tip
 For a shared workshop machine, open the **facilitator URL** on that device so scores accumulate in one browser.
 
+Example facilitator link:
+```
+https://governance-workshop-escape-room.vercel.app/?facilitator=1
+```
+(Replace with your actual Vercel production URL.)
+
 ---
 
-## 16. Social preview & branding
+## 16. Git, secrets & `.gitignore`
+
+The project is version-controlled on GitHub. Sensitive files must **never** be committed.
+
+### How `.gitignore` works
+- Listed patterns are skipped by `git add`, `commit`, and `push`
+- Files stay on your machine only
+- **Does not** remove files already committed — use `git rm --cached <file>` if that happens
+
+### What is ignored (`.gitignore`)
+
+| Category | Patterns |
+|----------|----------|
+| Secrets | `.env`, `.env.*`, `*.pem`, `*.key`, `credentials.json`, `secrets/` |
+| Vercel local | `.vercel` |
+| Internal docs | `*.docx`, `*.doc`, `*.pdf` |
+| OS / editor | `.DS_Store`, `Thumbs.db`, swap files |
+| Local overrides | `*.local.html`, `config.local.js` |
+
+### Safe commit workflow
+```powershell
+cd F:\Projects\governance-activity2
+git status
+git add .
+git commit -m "Your message"
+git push
+```
+Always check `git status` before pushing — the governance Word doc should **not** appear.
+
+### If a secret was already pushed
+1. Rotate/revoke the exposed key or credential
+2. `git rm --cached path/to/file` and commit
+3. If pushed to GitHub, treat the secret as compromised
+
+### Future API keys (Vercel KV, etc.)
+- Store in **Vercel → Project → Settings → Environment Variables**
+- Optionally commit `.env.example` with empty placeholder keys (not real values)
+
+---
+
+## 17. Vercel deployment
+
+### Repository
+- **GitHub:** `Izumi47/Governance-Workshop-Escape-Room`
+- **Branch:** `main`
+- **Vercel project name:** `governance-workshop-escape-room` (typical)
+
+This is a **static site** — no `package.json`, no build step.
+
+### New Project settings (Vercel import screen)
+
+| Setting | Value | Notes |
+|---------|--------|-------|
+| Framework Preset | **Other** | Not Next.js/React |
+| Root Directory | `./` | `index.html` at repo root |
+| Build Command | **Empty / disabled** | Do not use `npm run build` |
+| Output Directory | **`.`** | Not `public` — no public folder exists |
+| Install Command | **Empty / disabled** | No dependencies |
+| Environment Variables | **Empty for now** | Add when KV/API is implemented |
+
+### Optional `vercel.json` (recommended)
+Pin static deploy settings in the repo:
+```json
+{
+  "buildCommand": "",
+  "outputDirectory": "."
+}
+```
+
+### After first deploy
+1. Open the production URL and smoke-test (start → briefing → one question).
+2. **Attendees:** share the base URL.
+3. **Facilitator:** base URL + `?facilitator=1`.
+4. Update **absolute** social preview URLs in `index.html`:
+   ```html
+   <meta property="og:image" content="https://governance-workshop-escape-room.vercel.app/og-image.svg">
+   <meta name="twitter:image" content="https://governance-workshop-escape-room.vercel.app/og-image.svg">
+   ```
+5. Enable automatic deploys on push to `main` (default when GitHub is connected).
+
+### Shared leaderboard on Vercel (not implemented yet)
+Vercel hosts static files but does **not** store leaderboard data automatically. For room-wide rankings:
+1. Add **Serverless Functions** (`/api/score`, `/api/leaderboard`)
+2. Add **Vercel KV** (simple top-N) or **Vercel Postgres** (sessions, export)
+3. Put secrets in Vercel Environment Variables
+4. Update `ui.js` to `fetch()` the API
+
+Recommended for workshop scale: **Vercel KV + 2 API routes**. Keep facilitator toggle: facilitator view reads live rankings; players stay hidden until `showToUsers: true`.
+
+---
+
+## 18. Social preview & branding
 
 In `index.html`:
 - `<link rel="icon" href="favicon.svg">`
@@ -392,7 +492,7 @@ In `index.html`:
 
 ---
 
-## 17. Removing UI buttons safely
+## 19. Removing UI buttons safely
 
 **Practice Run** and **Skip briefing** were removed from `index.html`. Event listeners in `game.js` are wrapped in null checks:
 
@@ -408,7 +508,7 @@ Buttons that are already guarded: sound toggle, bomb toggle, practice, skip brie
 
 ---
 
-## 18. Chat history / decision log
+## 20. Chat history / decision log
 
 Chronological summary of requests and changes:
 
@@ -448,26 +548,15 @@ Chronological summary of requests and changes:
 
 14. **Vercel discussion** — Vercel hosts static files but does not store leaderboard data without Vercel KV/Postgres + API routes (not implemented yet).
 
----
+15. **Git initialized + `.gitignore`** — Excludes `.env`, credentials, `*.docx`/`*.pdf`, `.vercel`. Governance Word doc stays local only.
 
-## 19. Vercel hosting & shared leaderboard (planned)
+16. **GitHub push** — Repo published as `Izumi47/Governance-Workshop-Escape-Room`.
 
-### What Vercel provides today
-- Static hosting for this app ✅
-- Shared leaderboard automatically ❌
-
-### To get a real room-wide leaderboard on Vercel
-1. Add **Serverless Functions** (`/api/score`, `/api/leaderboard`)
-2. Add **Vercel KV** (simple top-N) or **Vercel Postgres** (sessions, export)
-3. Update `ui.js` to `fetch()` the API instead of/in addition to `localStorage`
-
-Recommended for workshop scale: **Vercel KV + 2 API routes**.
-
-Keep facilitator toggle: players submit scores silently; facilitator view reads live rankings from API.
+17. **Vercel setup** — Import from GitHub; Framework **Other**; no build/install; output directory **`.`**; env vars empty until API added.
 
 ---
 
-## 20. Known implementation notes
+## 21. Known implementation notes
 
 - **Start screen copy:** Each **answered** question cuts a wire (correct or wrong).
 - **Practice mode** code exists but UI entry was removed.
@@ -475,9 +564,11 @@ Keep facilitator toggle: players submit scores silently; facilitator view reads 
 - **`py-1` timeLimit** may be `2` for testing detonation — set to `60` for workshops.
 - **Checkbox / fill / choice** examples live in Python chamber.
 
+- **Governance Word doc** lives locally only (gitignored) — use it to update `questions.js`, do not commit it.
+
 ---
 
-## 21. Quick test checklist
+## 22. Quick test checklist
 
 - [ ] Start without name → blocked with error
 - [ ] Full run → timeout triggers explosion + fail screen
@@ -492,14 +583,17 @@ Keep facilitator toggle: players submit scores silently; facilitator view reads 
 - [ ] `?debrief=1` shows explanations
 - [ ] Mobile: bomb collapsible; layout stacks
 - [ ] Reduced motion: simplified animations
+- [ ] Vercel production URL loads game correctly
+- [ ] `git status` does not list `.docx` or `.env` files
 
 ---
 
-## 22. Suggested next steps
+## 23. Suggested next steps
 
-- Replace placeholder questions from governance Word doc
+- Replace placeholder questions from governance Word doc (local copy)
 - Reset `py-1` `timeLimit` to 60 for production
-- Deploy to Vercel; set absolute `og:image` URL
+- Set absolute `og:image` / `twitter:image` URLs after Vercel deploy
+- Add optional `vercel.json` to repo
 - Add Vercel KV + API routes for shared leaderboard (optional)
 - Re-enable `showToUsers: true` when ready for public rankings
 - Org logo / branding on start screen
@@ -507,4 +601,4 @@ Keep facilitator toggle: players submit scores silently; facilitator view reads 
 
 ---
 
-*Last updated: facilitator-only leaderboard, visual polish pass, Vercel planning, UI button removals, centered app layout.*
+*Last updated: GitHub push, `.gitignore`, Vercel deployment settings, facilitator-only leaderboard, visual polish pass.*
