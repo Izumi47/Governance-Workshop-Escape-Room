@@ -1,0 +1,40 @@
+# --- Secrets & environment (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+credentials.json
+service-account*.json
+
+# Vercel / local deploy overrides
+.vercel
+
+# --- Internal source material (workshop / org docs) ---
+*.docx
+*.doc
+*.pdf
+~$*
+
+# --- OS & editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# --- Logs & temp ---
+*.log
+npm-debug.log*
+.cache/
+tmp/
+temp/
+
+# --- Optional: local overrides not for the repo ---
+*.local.html
+config.local.js
