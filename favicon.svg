@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Data Governance Vault">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141a24"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f0a030"/>
+      <stop offset="100%" stop-color="#ffb454"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="#2a3548" stroke-width="2"/>
+  <circle cx="32" cy="34" r="14" fill="#1a2230" stroke="#3a2830" stroke-width="2"/>
+  <rect x="28" y="14" width="8" height="8" rx="2" fill="#2a3548"/>
+  <path d="M32 14 L32 8" stroke="#8b9bb4" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="32" cy="6" r="2.5" fill="#f07178"/>
+  <path d="M18 22 C22 18, 26 16, 32 16 C38 16, 42 18, 46 22" fill="none" stroke="#3dd68c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M16 28 C20 24, 26 22, 32 22 C38 22, 44 24, 48 28" fill="none" stroke="#59c2ff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M18 34 C22 30, 26 28, 32 28 C38 28, 42 30, 46 34" fill="none" stroke="#f0a030" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="26" y="31" width="12" height="7" rx="1.5" fill="#0c1018" stroke="url(#accent)" stroke-width="1.5"/>
+  <text x="32" y="36.5" text-anchor="middle" font-family="monospace" font-size="5" font-weight="700" fill="#f07178">07</text>
+</svg>

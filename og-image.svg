@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="The Data Governance Vault  Escape Room">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f141c"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="rgba(240,160,48,0.18)"/>
+      <stop offset="100%" stop-color="rgba(240,160,48,0)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g opacity="0.12">
+    <path d="M0 80 H1200 M0 160 H1200 M0 240 H1200 M0 320 H1200 M0 400 H1200 M0 480 H1200 M0 560 H1200" stroke="#2a3548" stroke-width="1"/>
+    <path d="M120 0 V630 M240 0 V630 M360 0 V630 M480 0 V630 M600 0 V630 M720 0 V630 M840 0 V630 M960 0 V630 M1080 0 V630" stroke="#2a3548" stroke-width="1"/>
+  </g>
+  <rect x="80" y="80" width="1040" height="470" rx="24" fill="none" stroke="#2a3548" stroke-width="2"/>
+  <text x="600" y="210" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" letter-spacing="12" fill="#8b9bb4">WORKSHOP CHALLENGE</text>
+  <text x="600" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="72" font-weight="700" fill="#e8edf5">The Data Governance Vault</text>
+  <text x="600" y="360" text-anchor="middle" font-family="system-ui,sans-serif" font-size="34" fill="#f0a030">Escape Room Quiz</text>
+  <g transform="translate(600 455)">
+    <circle cx="0" cy="0" r="42" fill="#1a2230" stroke="#3a2830" stroke-width="3"/>
+    <path d="M-34 -18 C-22 -28, -10 -32, 0 -32 C10 -32, 22 -28, 34 -18" fill="none" stroke="#3dd68c" stroke-width="4" stroke-linecap="round"/>
+    <path d="M-38 -4 C-24 -12, -12 -16, 0 -16 C12 -16, 24 -12, 38 -4" fill="none" stroke="#59c2ff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M-34 10 C-22 0, -10 -4, 0 -4 C10 -4, 22 0, 34 10" fill="none" stroke="#f07178" stroke-width="4" stroke-linecap="round"/>
+    <rect x="-18" y="-6" width="36" height="18" rx="3" fill="#0c1018" stroke="#f0a030" stroke-width="2"/>
+    <text x="0" y="7" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#f07178">DEFUSE</text>
+  </g>
+  <text x="600" y="565" text-anchor="middle" font-family="monospace" font-size="22" fill="#8b9bb4">Python · Power BI · ALM · SOP</text>
+</svg>

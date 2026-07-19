@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance Vault — Escape Room</title>
+  <meta name="description" content="Defuse the vault bomb by answering governance questions on Python, Power BI, ALM, and SOP. A workshop escape room challenge.">
+  <meta name="theme-color" content="#060810">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="The Data Governance Vault — Escape Room">
+  <meta property="og:description" content="Cut wires, beat the timer, and escape the vault. A governance workshop challenge covering Python, Power BI, ALM, and SOP.">
+  <meta property="og:image" content="og-image.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Data Governance Vault — Escape Room">
+  <meta name="twitter:description" content="Cut wires, beat the timer, and escape the vault. A governance workshop challenge.">
+  <meta name="twitter:image" content="og-image.svg">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles-enhancements.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="vault-overlay" aria-hidden="true"></div>
+  <div id="chamber-atmosphere" class="chamber-atmosphere" aria-hidden="true"></div>
+  <div class="ambient-glow" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+  <div id="score-pop-container" class="score-pop-container" aria-hidden="true"></div>
+  <div id="snip-overlay" class="snip-overlay" aria-hidden="true">✂️ SNIP!</div>
+
+  <button id="btn-sound" class="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+
+  <div class="page-shell">
+    <aside id="bomb-stage" class="bomb-stage" hidden aria-label="Defusal bomb status">
+      <button id="btn-bomb-toggle" class="bomb-stage__toggle" type="button" aria-expanded="true">Hide bomb</button>
+      <div class="bomb-stage__frame bomb-device">
+        <span class="bomb-device__corner bomb-device__corner--tl" aria-hidden="true"></span>
+        <span class="bomb-device__corner bomb-device__corner--tr" aria-hidden="true"></span>
+        <span class="bomb-device__corner bomb-device__corner--bl" aria-hidden="true"></span>
+        <span class="bomb-device__corner bomb-device__corner--br" aria-hidden="true"></span>
+        <span class="bomb-device__screw bomb-device__screw--tl" aria-hidden="true"></span>
+        <span class="bomb-device__screw bomb-device__screw--tr" aria-hidden="true"></span>
+        <span class="bomb-device__screw bomb-device__screw--bl" aria-hidden="true"></span>
+        <span class="bomb-device__screw bomb-device__screw--br" aria-hidden="true"></span>
+        <div class="bomb-device__header" aria-hidden="true">
+          <span class="bomb-device__label">DEFUSAL UNIT</span>
+          <span class="bomb-device__serial">DG-VLT-001</span>
+        </div>
+        <div id="explosion-flash" class="explosion-flash" hidden aria-hidden="true"></div>
+        <p class="bomb-stage__warning">⚠ DEFUSE PROTOCOL — CUT ONE WIRE PER QUESTION</p>
+        <svg id="bomb-svg" class="bomb-svg" viewBox="0 0 420 210" role="img" aria-label="Bomb with colored wires"></svg>
+        <div id="bomb-legend" class="bomb-legend" aria-label="Wire colors by chamber"></div>
+        <p id="bomb-status" class="bomb-status">Wires intact — answer to cut</p>
+      </div>
+    </aside>
+
+    <div class="page-shell__main">
+      <div id="timer-urgency" class="timer-urgency" aria-hidden="true"></div>
+      <nav id="vault-progress" class="vault-progress" hidden aria-label="Chamber progress"></nav>
+
+      <main id="app" class="app">
+    <!-- Start -->
+    <section id="screen-start" class="screen screen--active" aria-label="Start">
+      <div class="screen__inner screen__inner--vault">
+        <!-- <div class="vault-door-strip" aria-hidden="true"></div> -->
+        <p class="eyebrow">Workshop Challenge</p>
+        <h1 class="title">The Data Governance Vault</h1>
+        <p class="subtitle">A defusal bomb is wired to the vault lock. Each answered question cuts a wire — but if any question timer hits zero, the bomb detonates.</p>
+
+        <label class="name-field" for="player-name">
+          <span class="name-field__label">Your name <span class="name-field__required" aria-hidden="true">*</span></span>
+          <input id="player-name" class="name-field__input" type="text" maxlength="24" placeholder="Enter your name" autocomplete="nickname" required aria-required="true">
+          <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
+        </label>
+
+        <ul class="rules">
+          <li>One question at a time — each answer snips a wire</li>
+          <li>When time expires on any question, the bomb detonates — game over</li>
+          <li>Multiple choice, fill-in-the-blank, and checkbox questions</li>
+          <li>Python → Power BI → ALM → SOP</li>
+        </ul>
+
+        <div class="start-actions">
+          <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Enter the Vault</button>
+        </div>
+
+        <div id="start-leaderboard" class="leaderboard leaderboard--start" aria-label="Top scores" hidden></div>
+      </div>
+    </section>
+
+    <!-- Briefing -->
+    <section id="screen-briefing" class="screen" aria-label="Briefing" hidden>
+      <div class="screen__inner screen__inner--vault">
+        <p class="eyebrow">Mission Briefing</p>
+        <h2 class="title title--md">How to Survive the Vault</h2>
+        <ul class="briefing-list">
+          <li><strong>Answer questions</strong> to cut wires on the bomb — one wire per question.</li>
+          <li><strong>Beat the timer</strong> on every question. Zero seconds = detonation = game over.</li>
+          <li><strong>No going back</strong> — each question appears once.</li>
+          <li><strong>Faster answers</strong> earn speed bonus points.</li>
+          <li>Use keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
+        </ul>
+        <p id="briefing-mode" class="briefing-mode"></p>
+        <button id="btn-briefing-go" class="btn btn--primary" type="button">Begin Mission</button>
+      </div>
+    </section>
+
+    <!-- Chamber intro -->
+    <section id="screen-chamber" class="screen" aria-label="Chamber introduction" hidden>
+      <div class="screen__inner screen__inner--vault screen__inner--door">
+        <p class="eyebrow">Chamber <span id="chamber-number">1</span> of <span id="chamber-total">4</span></p>
+        <div class="chamber-badge" id="chamber-icon" aria-hidden="true"></div>
+        <h2 class="title title--md" id="chamber-name">Chamber</h2>
+        <p class="subtitle" id="chamber-desc"></p>
+        <button id="btn-enter-chamber" class="btn btn--primary" type="button">Unlock Chamber</button>
+      </div>
+    </section>
+
+    <!-- Question -->
+    <section id="screen-question" class="screen screen--wide" aria-label="Question" hidden>
+      <header class="hud">
+        <div class="hud__left">
+          <span class="hud__label">Score</span>
+          <span class="hud__value" id="hud-score">0</span>
+        </div>
+        <div class="hud__center">
+          <span class="hud__chamber" id="hud-chamber"></span>
+          <span class="hud__progress" id="hud-progress"></span>
+        </div>
+        <div class="hud__right">
+          <span class="hud__label">Time</span>
+          <div class="timer" id="timer" role="timer" aria-live="polite">
+            <svg class="timer__ring" viewBox="0 0 36 36" aria-hidden="true">
+              <circle class="timer__track" cx="18" cy="18" r="15.5"></circle>
+              <circle class="timer__fill" id="timer-ring" cx="18" cy="18" r="15.5"></circle>
+            </svg>
+            <span class="timer__text" id="timer-text">60</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="question-card" id="question-card">
+        <span id="question-type-badge" class="question-type-badge" hidden></span>
+        <p class="question-card__text" id="question-text"></p>
+        <div class="options" id="options" role="listbox" aria-label="Answer options"></div>
+      </div>
+
+      <div id="debrief-panel" class="debrief-panel" hidden></div>
+      <p class="hint" id="question-hint">Choose an answer before time runs out.</p>
+    </section>
+
+    <!-- Chamber cleared -->
+    <section id="screen-chamber-clear" class="screen" aria-label="Chamber cleared" hidden>
+      <div class="screen__inner screen__inner--vault screen__inner--door-open">
+        <p class="eyebrow eyebrow--success">Chamber Cleared</p>
+        <h2 class="title title--md" id="clear-chamber-name"></h2>
+        <p class="subtitle" id="clear-chamber-msg">The door grinds open. Onward.</p>
+        <p class="score-flash" id="clear-chamber-score"></p>
+        <button id="btn-next-chamber" class="btn btn--primary" type="button">Continue</button>
+      </div>
+    </section>
+
+    <!-- Fail -->
+    <section id="screen-fail" class="screen" aria-label="Game over" hidden>
+      <div class="screen__inner screen__inner--vault screen__inner--fail screen__inner--glitch">
+        <p class="eyebrow eyebrow--danger">Mission Failed</p>
+        <h2 class="title title--md">The Bomb Detonated</h2>
+        <p class="subtitle" id="fail-message">Time ran out — the vault remains locked.</p>
+        <p class="fail-detail" id="fail-detail"></p>
+        <div id="fail-answer" class="fail-answer" hidden></div>
+        <p class="results-total results-total--fail"><span id="fail-score">0</span> points</p>
+        <button id="btn-retry" class="btn btn--primary" type="button">Try Again</button>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="screen-results" class="screen" aria-label="Results" hidden>
+      <div class="screen__inner screen__inner--vault screen__inner--success">
+        <div id="tier-badge" class="tier-badge" aria-hidden="true"></div>
+        <p class="eyebrow" id="results-tier-eyebrow">Escape Complete</p>
+        <h2 class="title title--md" id="results-title">You Escaped!</h2>
+        <p class="results-total"><span id="results-score">0</span> points</p>
+        <p class="subtitle" id="results-message"></p>
+        <p class="results-player" id="results-player"></p>
+
+        <div class="breakdown" id="breakdown" aria-label="Score breakdown by chamber"></div>
+        <div id="results-leaderboard" class="leaderboard" aria-label="Leaderboard" hidden></div>
+
+        <button id="btn-restart" class="btn btn--secondary" type="button">Play Again</button>
+      </div>
+      </section>
+    </main>
+    </div>
+  </div>
+
+  <script src="js/questions.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/bomb.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
