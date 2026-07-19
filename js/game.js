@@ -46,6 +46,8 @@
     btnRestart: document.getElementById("btn-restart"),
     btnRetry: document.getElementById("btn-retry"),
     btnSound: document.getElementById("btn-sound"),
+    musicVolume: document.getElementById("music-volume"),
+    sfxVolume: document.getElementById("sfx-volume"),
     btnBombToggle: document.getElementById("btn-bomb-toggle"),
     playerName: document.getElementById("player-name"),
     playerNameError: document.getElementById("player-name-error"),
@@ -814,7 +816,7 @@
     if (window.GameUI) GameUI.updateProgress(state.chamberIndex, chamber.questions.length, state.completedChambers);
     showScreen("chamberClear");
     if (window.GameUI) GameUI.animateScreen("chamberClear", "anim-door-open");
-    if (window.GameSounds) GameSounds.unlock();
+    if (window.GameSounds) GameSounds.fanfare();
   }
 
   function nextChamber() {
@@ -872,7 +874,7 @@
       GameUI.animateScreen("results", "anim-success");
       GameUI.showConfetti();
     }
-    if (window.GameSounds) GameSounds.unlock();
+    if (window.GameSounds) GameSounds.fanfare();
   }
 
   function onKeyDown(event) {
@@ -905,6 +907,33 @@
     els.btnSound.setAttribute("title", muted ? "Unmute sound" : "Mute sound");
   }
 
+  function syncVolumeSlider(el, getter) {
+    if (!el || !window.GameSounds || !getter) return;
+    const pct = Math.round(getter() * 100);
+    el.value = String(pct);
+    el.setAttribute("aria-valuenow", String(pct));
+  }
+
+  function syncMusicVolumeSlider() {
+    syncVolumeSlider(els.musicVolume, GameSounds.getMusicVolume);
+  }
+
+  function syncSfxVolumeSlider() {
+    syncVolumeSlider(els.sfxVolume, GameSounds.getSfxVolume);
+  }
+
+  function bindVolumeSlider(el, setter) {
+    if (!el || !setter) return;
+    el.addEventListener("input", function () {
+      const pct = Number(el.value);
+      setter(pct / 100);
+      el.setAttribute("aria-valuenow", String(pct));
+      if (window.GameSounds && GameSounds.unlock) {
+        GameSounds.unlock();
+      }
+    });
+  }
+
   function onPopState() {
     if (
       screens.question.classList.contains("screen--active") ||
@@ -935,6 +964,23 @@
     });
   }
 
+  if (els.musicVolume) {
+    bindVolumeSlider(els.musicVolume, function (v) {
+      return GameSounds.setMusicVolume(v);
+    });
+  }
+
+  if (els.sfxVolume) {
+    bindVolumeSlider(els.sfxVolume, function (v) {
+      return GameSounds.setSfxVolume(v);
+    });
+    els.sfxVolume.addEventListener("change", function () {
+      if (window.GameSounds && !GameSounds.isMuted()) {
+        GameSounds.tick();
+      }
+    });
+  }
+
   if (els.btnBombToggle) {
     els.btnBombToggle.addEventListener("click", function () {
       GameUI.toggleBombCollapsed();
@@ -954,5 +1000,7 @@
     GameUI.renderLeaderboardIfVisible(els.startLeaderboard);
   }
   updateSoundButton();
+  syncMusicVolumeSlider();
+  syncSfxVolumeSlider();
   els.chamberTotal.textContent = String(data.chambers.length);
 })();

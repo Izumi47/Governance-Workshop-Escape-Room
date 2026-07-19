@@ -84,29 +84,68 @@ body.mode-facilitator.mode-practice::after {
   margin: 0 0 0.75rem;
 }
 
-/* Sound toggle — steel plate, SVG icons */
-.sound-toggle {
+/* Audio dock — mute + hover-reveal volume sliders (top left) */
+.audio-dock {
   position: fixed;
   top: 0.75rem;
-  right: 0.75rem;
+  left: 0.75rem;
+  right: auto;
   z-index: 50;
-  width: 2.5rem;
-  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.3rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(180deg, #2a2e38 0%, var(--bg-panel) 100%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.audio-dock__sliders {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  margin-left: 0;
+  transition: max-width 0.22s ease, opacity 0.18s ease, margin-left 0.22s ease;
+}
+
+.audio-dock:hover .audio-dock__sliders,
+.audio-dock:focus-within .audio-dock__sliders {
+  max-width: 18rem;
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: 0.45rem;
+  padding-right: 0.25rem;
+}
+
+.sound-toggle {
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .sound-toggle:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .sound-toggle:focus-visible {
@@ -124,6 +163,43 @@ body.mode-facilitator.mode-practice::after {
 
 .sound-toggle--muted .sound-toggle__icon--off {
   display: block;
+}
+
+.audio-volume {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.audio-volume__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  opacity: 0.85;
+  min-width: 1rem;
+}
+
+.audio-volume__slider {
+  width: 4.75rem;
+  height: 0.35rem;
+  accent-color: var(--accent, #f0a030);
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Vault progress map — flat stamps, not stacked cards */
@@ -709,10 +785,26 @@ kbd {
     height: 5px;
   }
 
-  .sound-toggle {
+  .audio-dock {
     top: auto;
     bottom: 0.75rem;
-    right: 0.75rem;
+    left: 0.75rem;
+    right: auto;
+  }
+
+  .audio-dock:hover .audio-dock__sliders,
+  .audio-dock:focus-within .audio-dock__sliders {
+    max-width: 16rem;
+  }
+
+  .audio-volume__slider {
+    width: 3.75rem;
+  }
+
+  .sound-toggle {
+    top: auto;
+    bottom: auto;
+    right: auto;
   }
 }
 
