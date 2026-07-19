@@ -23,6 +23,10 @@
   let scoreAnimFrame = null;
   let startLeaderboardEl = null;
   let resultsLeaderboardEl = null;
+  let shutterEl = null;
+  let shutterTimer = null;
+  let sealedChambers = {};
+  let bloomTimer = null;
 
   function getLeaderboardConfig() {
     return window.GAME_DATA && window.GAME_DATA.leaderboard
@@ -96,6 +100,8 @@
       atmosphereEl = document.getElementById("chamber-atmosphere");
       startLeaderboardEl = document.getElementById("start-leaderboard");
       resultsLeaderboardEl = document.getElementById("results-leaderboard");
+      shutterEl = document.getElementById("vault-shutter");
+      sealedChambers = {};
 
       this.syncLeaderboardVisibility();
 
@@ -173,8 +179,17 @@
         });
 
         if (isDone) {
+          const wasSealed = !!sealedChambers[i];
           step.classList.add("vault-progress__step--done");
           stateEl.textContent = "✓";
+          if (!wasSealed && !reducedMotion) {
+            sealedChambers[i] = true;
+            step.classList.remove("vault-progress__step--seal");
+            void step.offsetWidth;
+            step.classList.add("vault-progress__step--seal");
+          } else {
+            sealedChambers[i] = true;
+          }
         } else if (isActive) {
           step.classList.add("vault-progress__step--active");
           stateEl.textContent = "Q" + (questionIndex + 1) + "/" + qTotal;
@@ -384,18 +399,23 @@
       if (!confettiCtx || reducedMotion) return;
       const w = confettiCanvas.width;
       const h = confettiCanvas.height;
-      const colors = ["#f0a030", "#3dd68c", "#59c2ff", "#f07178", "#ffb454"];
+      const colors = ["#c9921a", "#f0c45a", "#3dd68c", "#59c2ff", "#f07178", "#ebe8e1"];
       const pieces = [];
-      for (let i = 0; i < 80; i += 1) {
+      for (let i = 0; i < 140; i += 1) {
+        const ribbon = Math.random() > 0.45;
         pieces.push({
           x: Math.random() * w,
-          y: Math.random() * h - h,
-          r: 4 + Math.random() * 6,
+          y: Math.random() * h * -0.4 - 20,
+          w: ribbon ? 3 + Math.random() * 4 : 5 + Math.random() * 7,
+          h: ribbon ? 10 + Math.random() * 16 : 4 + Math.random() * 5,
           color: colors[Math.floor(Math.random() * colors.length)],
-          vy: 2 + Math.random() * 4,
-          vx: -2 + Math.random() * 4,
+          vy: 2.2 + Math.random() * 4.5,
+          vx: -2.5 + Math.random() * 5,
           rot: Math.random() * 360,
-          vr: -6 + Math.random() * 12
+          vr: -10 + Math.random() * 20,
+          gravity: 0.045 + Math.random() * 0.04,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.08 + Math.random() * 0.1
         });
       }
 
@@ -403,24 +423,84 @@
       function draw() {
         confettiCtx.clearRect(0, 0, w, h);
         pieces.forEach(function (p) {
-          p.x += p.vx;
+          p.vy += p.gravity;
+          p.wobble += p.wobbleSpeed;
+          p.x += p.vx + Math.sin(p.wobble) * 0.8;
           p.y += p.vy;
           p.rot += p.vr;
           confettiCtx.save();
           confettiCtx.translate(p.x, p.y);
           confettiCtx.rotate((p.rot * Math.PI) / 180);
           confettiCtx.fillStyle = p.color;
-          confettiCtx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+          confettiCtx.globalAlpha = Math.max(0, 1 - frame / 150);
+          confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
           confettiCtx.restore();
         });
         frame += 1;
-        if (frame < 120) {
+        if (frame < 150) {
           requestAnimationFrame(draw);
         } else {
           confettiCtx.clearRect(0, 0, w, h);
         }
       }
       draw();
+    },
+
+    playVaultShutter: function (onMidpoint, onComplete) {
+      if (reducedMotion || !shutterEl) {
+        if (typeof onMidpoint === "function") onMidpoint();
+        if (typeof onComplete === "function") onComplete();
+        return;
+      }
+
+      if (shutterTimer) {
+        window.clearTimeout(shutterTimer);
+        shutterTimer = null;
+      }
+
+      shutterEl.classList.remove("vault-shutter--play");
+      void shutterEl.offsetWidth;
+      shutterEl.classList.add("vault-shutter--play");
+      shutterEl.setAttribute("aria-hidden", "false");
+
+      window.setTimeout(function () {
+        if (typeof onMidpoint === "function") onMidpoint();
+      }, 290);
+
+      shutterTimer = window.setTimeout(function () {
+        shutterEl.classList.remove("vault-shutter--play");
+        shutterEl.setAttribute("aria-hidden", "true");
+        shutterTimer = null;
+        if (typeof onComplete === "function") onComplete();
+      }, 900);
+    },
+
+    celebrateCorrect: function () {
+      if (reducedMotion) return;
+      document.body.classList.remove("vault-correct-bloom");
+      void document.body.offsetWidth;
+      document.body.classList.add("vault-correct-bloom");
+      const card = document.querySelector(".question-card");
+      if (card) {
+        card.classList.remove("question-card--correct-lock");
+        void card.offsetWidth;
+        card.classList.add("question-card--correct-lock");
+      }
+      if (bloomTimer) window.clearTimeout(bloomTimer);
+      bloomTimer = window.setTimeout(function () {
+        document.body.classList.remove("vault-correct-bloom");
+        if (card) card.classList.remove("question-card--correct-lock");
+        bloomTimer = null;
+      }, 750);
+    },
+
+    resetSpectacleState: function () {
+      sealedChambers = {};
+      document.body.classList.remove("vault-correct-bloom");
+      if (shutterEl) {
+        shutterEl.classList.remove("vault-shutter--play");
+        shutterEl.setAttribute("aria-hidden", "true");
+      }
     },
 
     saveScore: function (name, score, tier) {

@@ -11,8 +11,8 @@
   ];
   const MUSIC_VOLUME_KEY = "vault-music-volume";
   const SFX_VOLUME_KEY = "vault-sfx-volume";
-  const DEFAULT_MUSIC_VOLUME = 0.35;
-  const DEFAULT_SFX_VOLUME = 0.8;
+  const DEFAULT_MUSIC_VOLUME = 0.2;
+  const DEFAULT_SFX_VOLUME = 0.5;
 
   let ctx = null;
   let muted = false;

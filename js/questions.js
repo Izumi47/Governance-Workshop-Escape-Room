@@ -28,10 +28,11 @@ window.GAME_DATA = {
     timeLimitMin: 90
   },
 
+  // Score bands for 40 questions × 100 base (+ up to 50 speed). Max ≈ 6000.
   tiers: [
-    { minScore: 900, eyebrow: "Governance Champion", title: "Flawless Escape!", message: "Outstanding — you know the vault rules inside and out." },
-    { minScore: 600, eyebrow: "Vault Specialist", title: "You Escaped!", message: "Solid governance instincts. A few gaps to review, but you're free." },
-    { minScore: 300, eyebrow: "Almost There", title: "Door Unlocked… Barely", message: "You made it out, but the vault flagged several policy gaps." },
+    { minScore: 4500, eyebrow: "Governance Champion", title: "Flawless Escape!", message: "Outstanding — you know the vault rules inside and out." },
+    { minScore: 3000, eyebrow: "Vault Specialist", title: "You Escaped!", message: "Solid governance instincts. A few gaps to review, but you're free." },
+    { minScore: 1500, eyebrow: "Almost There", title: "Door Unlocked… Barely", message: "You made it out, but the vault flagged several policy gaps." },
     { minScore: 0, eyebrow: "Training Required", title: "Reality Check", message: "The vault keeps its secrets. Review the governance docs and try again." }
   ],
 

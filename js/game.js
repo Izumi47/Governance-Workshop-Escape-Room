@@ -88,14 +88,26 @@
     failAnswer: document.getElementById("fail-answer")
   };
 
-  function showScreen(name) {
-    Object.values(screens).forEach(function (screen) {
-      if (!screen) return;
-      screen.classList.remove("screen--active");
-      screen.hidden = true;
-    });
-    screens[name].classList.add("screen--active");
-    screens[name].hidden = false;
+  function showScreen(name, options) {
+    const dramatic = options && options.dramatic;
+    const apply = function () {
+      Object.values(screens).forEach(function (screen) {
+        if (!screen) return;
+        screen.classList.remove("screen--active");
+        screen.hidden = true;
+      });
+      screens[name].classList.add("screen--active");
+      screens[name].hidden = false;
+      if (options && typeof options.onReveal === "function") {
+        options.onReveal();
+      }
+    };
+
+    if (dramatic && window.GameUI && GameUI.playVaultShutter) {
+      GameUI.playVaultShutter(apply);
+      return;
+    }
+    apply();
   }
 
   function shouldDebrief() {
@@ -299,6 +311,7 @@
     if (window.GameUI) GameUI.clearChamberTheme();
     if (els.failAnswer) els.failAnswer.hidden = true;
     if (els.tierBadge) els.tierBadge.hidden = true;
+    if (window.GameUI && GameUI.resetSpectacleState) GameUI.resetSpectacleState();
   }
 
   function beginSession(mode) {
@@ -318,7 +331,7 @@
         ? "Practice mode: extended timers, no detonation, debrief enabled."
         : "Full mission: timers are strict — any timeout detonates the bomb.";
     }
-    showScreen("briefing");
+    showScreen("briefing", { dramatic: true });
   }
 
   function launchMission() {
@@ -355,9 +368,13 @@
       GameUI.setChamberTheme(chamber);
       GameUI.updateProgress(state.chamberIndex, state.questionIndex, state.completedChambers);
     }
-    showScreen("chamber");
-    if (window.GameUI) GameUI.animateScreen("chamber", "anim-door-slide");
-    if (window.GameSounds) GameSounds.door();
+    showScreen("chamber", {
+      dramatic: true,
+      onReveal: function () {
+        if (window.GameUI) GameUI.animateScreen("chamber", "anim-door-slide");
+        if (window.GameSounds) GameSounds.door();
+      }
+    });
   }
 
   function renderChoiceOptions(question) {
@@ -375,6 +392,19 @@
       });
       els.options.appendChild(btn);
     });
+  }
+
+  function playQuestionEnter() {
+    if (!els.questionCard) return;
+    els.questionCard.classList.remove("question-card--enter", "question-card--correct-lock");
+    void els.questionCard.offsetWidth;
+    els.questionCard.classList.add("question-card--enter");
+    const hud = document.querySelector(".hud");
+    if (hud) {
+      hud.classList.remove("hud--enter");
+      void hud.offsetWidth;
+      hud.classList.add("hud--enter");
+    }
   }
 
   function showQuestion() {
@@ -427,6 +457,7 @@
       });
 
       showScreen("question");
+      playQuestionEnter();
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
       input.focus();
@@ -468,6 +499,7 @@
       });
 
       showScreen("question");
+      playQuestionEnter();
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
     } else {
@@ -475,6 +507,7 @@
       els.questionHint.className = "hint";
       renderChoiceOptions(question);
       showScreen("question");
+      playQuestionEnter();
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
     }
@@ -647,7 +680,10 @@
 
     if (result.correct) {
       if (window.GameSounds) GameSounds.correct();
-      if (window.GameUI) GameUI.showScorePop(result.points, result.bonus);
+      if (window.GameUI) {
+        GameUI.showScorePop(result.points, result.bonus);
+        if (GameUI.celebrateCorrect) GameUI.celebrateCorrect();
+      }
     } else {
       if (window.GameSounds) GameSounds.wrong();
     }
@@ -779,15 +815,19 @@
         GameUI.getCorrectAnswerText(question, qType) + "</p>";
     }
 
-    showScreen("fail");
-    if (window.GameUI) GameUI.animateScreen("fail", "anim-glitch");
+    showScreen("fail", {
+      dramatic: true,
+      onReveal: function () {
+        if (window.GameUI) GameUI.animateScreen("fail", "anim-glitch");
+      }
+    });
   }
 
   function returnToStart() {
     resetGame();
     if (window.BombWidget) BombWidget.hide();
     if (window.GameUI) GameUI.renderLeaderboardIfVisible(els.startLeaderboard);
-    showScreen("start");
+    showScreen("start", { dramatic: true });
   }
 
   function advanceQuestion() {
@@ -815,9 +855,13 @@
     els.btnNextChamber.textContent = isLast ? "See Results" : "Next Chamber";
 
     if (window.GameUI) GameUI.updateProgress(state.chamberIndex, chamber.questions.length, state.completedChambers);
-    showScreen("chamberClear");
-    if (window.GameUI) GameUI.animateScreen("chamberClear", "anim-door-open");
-    if (window.GameSounds) GameSounds.fanfare();
+    showScreen("chamberClear", {
+      dramatic: true,
+      onReveal: function () {
+        if (window.GameUI) GameUI.animateScreen("chamberClear", "anim-door-open");
+        if (window.GameSounds) GameSounds.fanfare();
+      }
+    });
   }
 
   function nextChamber() {
@@ -963,6 +1007,7 @@
 
       const item = document.createElement("li");
       item.className = "answer-review__item " + statusClass;
+      item.style.setProperty("--review-index", String(questionNumber - 1));
       item.innerHTML =
         '<div class="answer-review__meta">' +
           '<span class="answer-review__index">Q' + questionNumber + "</span>" +
@@ -1020,13 +1065,17 @@
     }
     GameUI.renderLeaderboardIfVisible(els.resultsLeaderboard, state.playerName);
 
-    showScreen("results");
-    if (window.BombWidget) BombWidget.setDefused();
-    if (window.GameUI) {
-      GameUI.animateScreen("results", "anim-success");
-      GameUI.showConfetti();
-    }
-    if (window.GameSounds) GameSounds.fanfare();
+    showScreen("results", {
+      dramatic: true,
+      onReveal: function () {
+        if (window.BombWidget) BombWidget.setDefused();
+        if (window.GameUI) {
+          GameUI.animateScreen("results", "anim-success");
+          GameUI.showConfetti();
+        }
+        if (window.GameSounds) GameSounds.fanfare();
+      }
+    });
   }
 
   function onKeyDown(event) {
