@@ -38,3 +38,5 @@ temp/
 # --- Optional: local overrides not for the repo ---
 *.local.html
 config.local.js
+
+DOCUMENTATION.md
