@@ -91,7 +91,9 @@ This is a **static site** (no `package.json`, no build).
 | Build Command | *(empty)* |
 | Output Directory | `.` |
 
-Connect the GitHub repo and deploy. See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, gitignore rules, and facilitator/leaderboard details.
+Connect the GitHub repo and deploy. Enable **Speed Insights** in the Vercel dashboard for performance metrics (scripts already in `index.html`).
+
+See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, Speed Insights, gitignore rules, and facilitator/leaderboard details.
 
 ---
 

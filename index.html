@@ -201,5 +201,17 @@
   <script src="js/ui.js"></script>
   <script src="js/bomb.js"></script>
   <script src="js/game.js"></script>
+
+  <!-- Vercel Speed Insights (production only — enable in Vercel project settings) -->
+  <script>
+    function speedInsightsBeforeSend(data) {
+      if (data.url) data.url = data.url.split("?")[0];
+      return data;
+    }
+  </script>
+  <script>
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

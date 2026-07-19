@@ -467,6 +467,33 @@ Pin static deploy settings in the repo:
    ```
 5. Enable automatic deploys on push to `main` (default when GitHub is connected).
 
+### Vercel Speed Insights
+
+Uses the **HTML script** integration (no `@vercel/speed-insights` npm package — this repo has no build step).
+
+1. Vercel Dashboard → project → **Speed Insights** → **Enable**
+2. Redeploy after enabling (routes at `/_vercel/speed-insights/*`)
+3. Scripts are in `index.html` before `</body>`:
+
+```html
+<script>
+  function speedInsightsBeforeSend(data) {
+    if (data.url) data.url = data.url.split("?")[0];
+    return data;
+  }
+</script>
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
+```
+
+`speedInsightsBeforeSend` strips query strings (e.g. `?facilitator=1`) from reported URLs.
+
+**Verify:** On the production URL, DevTools → Network → `/_vercel/speed-insights/script.js` should return 200. Local `file://` or offline server will 404 — expected.
+
+Docs: [Speed Insights quickstart](https://vercel.com/docs/speed-insights/quickstart)
+
 ### Shared leaderboard on Vercel (not implemented yet)
 Vercel hosts static files but does **not** store leaderboard data automatically. For room-wide rankings:
 1. Add **Serverless Functions** (`/api/score`, `/api/leaderboard`)
@@ -554,6 +581,8 @@ Chronological summary of requests and changes:
 
 17. **Vercel setup** — Import from GitHub; Framework **Other**; no build/install; output directory **`.`**; env vars empty until API added.
 
+18. **Vercel Speed Insights** — HTML script integration in `index.html`; enable in dashboard; strips URL query params from metrics.
+
 ---
 
 ## 21. Known implementation notes
@@ -584,6 +613,7 @@ Chronological summary of requests and changes:
 - [ ] Mobile: bomb collapsible; layout stacks
 - [ ] Reduced motion: simplified animations
 - [ ] Vercel production URL loads game correctly
+- [ ] `/_vercel/speed-insights/script.js` loads on production (after enabling in dashboard)
 - [ ] `git status` does not list `.docx` or `.env` files
 
 ---
@@ -601,4 +631,4 @@ Chronological summary of requests and changes:
 
 ---
 
-*Last updated: GitHub push, `.gitignore`, Vercel deployment settings, facilitator-only leaderboard, visual polish pass.*
+*Last updated: Vercel Speed Insights, GitHub push, `.gitignore`, facilitator-only leaderboard.*
