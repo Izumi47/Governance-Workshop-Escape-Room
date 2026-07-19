@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Governance Vault — Escape Room</title>
   <meta name="description" content="Defuse the vault bomb by answering governance questions on Python, Power BI, ALM, and SOP. A workshop escape room challenge.">
-  <meta name="theme-color" content="#060810">
+  <meta name="theme-color" content="#14161c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="favicon.svg">
   <meta property="og:type" content="website">
@@ -20,18 +20,29 @@
   <link rel="stylesheet" href="css/styles-enhancements.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="vault-overlay" aria-hidden="true"></div>
   <div id="chamber-atmosphere" class="chamber-atmosphere" aria-hidden="true"></div>
   <div class="ambient-glow" aria-hidden="true"></div>
-  <div class="scanlines" aria-hidden="true"></div>
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
   <div id="score-pop-container" class="score-pop-container" aria-hidden="true"></div>
-  <div id="snip-overlay" class="snip-overlay" aria-hidden="true">✂️ SNIP!</div>
+  <div id="snip-overlay" class="snip-overlay" aria-hidden="true">
+    <svg class="snip-overlay__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/>
+    </svg>
+    <span>SNIP</span>
+  </div>
 
-  <button id="btn-sound" class="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+  <button id="btn-sound" class="sound-toggle" type="button" aria-label="Toggle sound" title="Toggle sound">
+    <svg class="sound-toggle__icon sound-toggle__icon--on" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    </svg>
+    <svg class="sound-toggle__icon sound-toggle__icon--off" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  </button>
 
   <div class="page-shell">
     <aside id="bomb-stage" class="bomb-stage" hidden aria-label="Defusal bomb status">
@@ -63,44 +74,49 @@
 
       <main id="app" class="app">
     <!-- Start -->
-    <section id="screen-start" class="screen screen--active" aria-label="Start">
-      <div class="screen__inner screen__inner--vault">
-        <!-- <div class="vault-door-strip" aria-hidden="true"></div> -->
-        <p class="eyebrow">Workshop Challenge</p>
-        <h1 class="title">The Data Governance Vault</h1>
-        <p class="subtitle">A defusal bomb is wired to the vault lock. Each answered question cuts a wire — but if any question timer hits zero, the bomb detonates.</p>
-
-        <label class="name-field" for="player-name">
-          <span class="name-field__label">Your name <span class="name-field__required" aria-hidden="true">*</span></span>
-          <input id="player-name" class="name-field__input" type="text" maxlength="24" placeholder="Enter your name" autocomplete="nickname" required aria-required="true">
-          <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
-        </label>
-
-        <ul class="rules">
-          <li>One question at a time — each answer snips a wire</li>
-          <li>When time expires on any question, the bomb detonates — game over</li>
-          <li>Multiple choice, fill-in-the-blank, and checkbox questions</li>
-          <li>Python → Power BI → ALM → SOP</li>
-        </ul>
-
-        <div class="start-actions">
-          <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Enter the Vault</button>
+    <section id="screen-start" class="screen screen--hero screen--active" aria-label="Start">
+      <div class="hero">
+        <div class="hero__plane" aria-hidden="true">
+          <div class="hero__hazard"></div>
+          <div class="hero__plate">
+            <span class="hero__unit">DEFUSAL UNIT</span>
+            <span class="hero__serial">DG-VLT-001</span>
+          </div>
+          <div class="hero__bolts">
+            <span></span><span></span><span></span><span></span>
+          </div>
         </div>
+        <div class="hero__content">
+          <p class="eyebrow">Workshop Challenge</p>
+          <h1 class="title title--hero">The Data Governance Vault</h1>
+          <p class="subtitle">Cut one wire per answer. If any question timer hits zero, the bomb detonates.</p>
 
-        <div id="start-leaderboard" class="leaderboard leaderboard--start" aria-label="Top scores" hidden></div>
+          <label class="name-field" for="player-name">
+            <span class="name-field__label">Your name <span class="name-field__required" aria-hidden="true">*</span></span>
+            <input id="player-name" class="name-field__input" type="text" maxlength="24" placeholder="Enter your name" autocomplete="nickname" required aria-required="true">
+            <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
+          </label>
+
+          <div class="start-actions">
+            <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Enter the Vault</button>
+          </div>
+
+          <div id="start-leaderboard" class="leaderboard leaderboard--start" aria-label="Top scores" hidden></div>
+        </div>
       </div>
     </section>
 
     <!-- Briefing -->
     <section id="screen-briefing" class="screen" aria-label="Briefing" hidden>
       <div class="screen__inner screen__inner--vault">
+        <div class="vault-door-strip" aria-hidden="true"></div>
         <p class="eyebrow">Mission Briefing</p>
         <h2 class="title title--md">How to Survive the Vault</h2>
         <ul class="briefing-list">
           <li><strong>Answer questions</strong> to cut wires on the bomb — one wire per question.</li>
           <li><strong>Beat the timer</strong> on every question. Zero seconds = detonation = game over.</li>
-          <li><strong>No going back</strong> — each question appears once.</li>
-          <li><strong>Faster answers</strong> earn speed bonus points.</li>
+          <li><strong>Chambers:</strong> Python → Power BI → ALM → SOP.</li>
+          <li><strong>No going back</strong> — each question appears once. Faster answers earn speed bonus.</li>
           <li>Use keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
         </ul>
         <p id="briefing-mode" class="briefing-mode"></p>
@@ -111,6 +127,7 @@
     <!-- Chamber intro -->
     <section id="screen-chamber" class="screen" aria-label="Chamber introduction" hidden>
       <div class="screen__inner screen__inner--vault screen__inner--door">
+        <div class="vault-door-strip" aria-hidden="true"></div>
         <p class="eyebrow">Chamber <span id="chamber-number">1</span> of <span id="chamber-total">4</span></p>
         <div class="chamber-badge" id="chamber-icon" aria-hidden="true"></div>
         <h2 class="title title--md" id="chamber-name">Chamber</h2>

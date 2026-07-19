@@ -1,20 +1,27 @@
 :root {
-  --bg-deep: #060810;
-  --bg-panel: #0f141c;
-  --bg-card: #161d28;
-  --border: #2a3548;
-  --text: #e8edf5;
-  --text-muted: #8b9bb4;
-  --accent: #f0a030;
-  --accent-glow: rgba(240, 160, 48, 0.35);
+  --bg-deep: #14161c;
+  --bg-panel: #1c1f27;
+  --bg-card: #252932;
+  --border: #3d4450;
+  --text: #ebe8e1;
+  --text-muted: #9a968c;
+  --accent: #c9921a;
+  --accent-glow: rgba(201, 146, 26, 0.28);
   --success: #3dd68c;
-  --danger: #f07178;
-  --danger-glow: rgba(240, 113, 120, 0.25);
-  --warning: #ffb454;
-  --font-display: "Outfit", system-ui, sans-serif;
+  --danger: #e05a62;
+  --danger-glow: rgba(224, 90, 98, 0.22);
+  --warning: #d4a017;
+  --steel: #8a909c;
+  --steel-dark: #2a2e38;
+  --chamber-python: #3dd68c;
+  --chamber-powerbi: #59c2ff;
+  --chamber-alm: #c9921a;
+  --chamber-sop: #e05a62;
+  --font-display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --radius: 12px;
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --radius: 6px;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   --bomb-layout-share: 40%;
 }
 
@@ -35,7 +42,7 @@ body {
 }
 
 body {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   background: var(--bg-deep);
   color: var(--text);
   line-height: 1.5;
@@ -52,15 +59,16 @@ body {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 50% 100%, rgba(240, 113, 120, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 0%, rgba(240, 160, 48, 0.05) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 28%),
     repeating-linear-gradient(
-      0deg,
-      transparent,
+      90deg,
+      transparent 0,
       transparent 2px,
-      rgba(255, 255, 255, 0.012) 2px,
-      rgba(255, 255, 255, 0.012) 4px
-    );
+      rgba(0, 0, 0, 0.04) 2px,
+      rgba(0, 0, 0, 0.04) 3px
+    ),
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.55) 0%, transparent 55%),
+    linear-gradient(160deg, #181b22 0%, #12141a 45%, #1a1c22 100%);
   z-index: 0;
 }
 
@@ -68,7 +76,7 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 20%, rgba(240, 160, 48, 0.04), transparent 45%);
+  background: radial-gradient(circle at 50% 18%, rgba(201, 146, 26, 0.06), transparent 42%);
   z-index: 0;
   opacity: 0;
   transition: opacity 0.6s ease;
@@ -79,23 +87,8 @@ body.vault-active .ambient-glow {
 }
 
 body.vault-critical .ambient-glow {
-  background: radial-gradient(circle at 50% 15%, rgba(240, 113, 120, 0.12), transparent 50%);
+  background: radial-gradient(circle at 50% 15%, rgba(224, 90, 98, 0.14), transparent 50%);
   animation: criticalPulse 1.2s ease infinite alternate;
-}
-
-.scanlines {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.08) 3px,
-    rgba(0, 0, 0, 0.08) 4px
-  );
-  z-index: 0;
-  opacity: 0.35;
 }
 
 @keyframes criticalPulse {
@@ -317,6 +310,21 @@ body.vault-active .bomb-stage__frame {
   height: 8px;
   border-radius: 50%;
   box-shadow: 0 0 6px currentColor;
+}
+
+.bomb-legend__icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.bomb-legend__mark {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text);
 }
 
 .bomb-status {
@@ -647,7 +655,7 @@ body.vault-exploded .bomb-stage {
 
 .results-total--fail {
   color: var(--danger);
-  font-size: 2rem;
+  font-size: clamp(2rem, 7vw, 2.75rem);
   margin-bottom: 1.5rem;
 }
 
@@ -679,6 +687,10 @@ body.vault-exploded .bomb-stage {
   max-width: 680px;
 }
 
+.screen--hero {
+  max-width: min(720px, 100%);
+}
+
 .screen--active {
   display: block;
   margin-block: auto;
@@ -687,7 +699,7 @@ body.vault-exploded .bomb-stage {
 .screen__inner {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 4px);
+  border-radius: var(--radius);
   padding: 2.5rem 2rem;
   box-shadow: var(--shadow);
   text-align: center;
@@ -695,23 +707,126 @@ body.vault-exploded .bomb-stage {
 
 .screen__inner--vault {
   position: relative;
-  border-color: #2a3548;
+  border-color: var(--border);
   background:
-    linear-gradient(180deg, rgba(240, 160, 48, 0.03) 0%, transparent 30%),
+    linear-gradient(180deg, rgba(201, 146, 26, 0.04) 0%, transparent 24%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02), transparent 40%, rgba(0, 0, 0, 0.08)),
     var(--bg-panel);
 }
 
 .vault-door-strip {
-  height: 6px;
+  height: 8px;
   margin: -2.5rem -2rem 1.5rem;
   background: repeating-linear-gradient(
     90deg,
     var(--accent) 0px,
-    var(--accent) 16px,
-    #1a2230 16px,
-    #1a2230 32px
+    var(--accent) 14px,
+    #1a1c22 14px,
+    #1a1c22 28px
   );
-  border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* Start hero — full composition, not a nested card */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--steel-dark);
+  text-align: center;
+}
+
+.hero__plane {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 18%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 0, 0, 0.06) 3px,
+      rgba(0, 0, 0, 0.06) 4px
+    ),
+    linear-gradient(165deg, #2a2e38 0%, #1a1c22 55%, #12141a 100%);
+}
+
+.hero__hazard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--accent) 0,
+    var(--accent) 16px,
+    #1a1c22 16px,
+    #1a1c22 32px
+  );
+}
+
+.hero__plate {
+  position: absolute;
+  top: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid rgba(138, 144, 156, 0.45);
+  background: linear-gradient(180deg, #323844 0%, #22262f 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hero__unit,
+.hero__serial {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.hero__unit {
+  font-size: 0.62rem;
+  color: var(--steel);
+}
+
+.hero__serial {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hero__bolts {
+  position: absolute;
+  inset: 0.85rem;
+}
+
+.hero__bolts span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, #6a7180, #2a2e38 60%);
+  border: 1px solid #1a1c22;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hero__bolts span:nth-child(1) { top: 0; left: 0; }
+.hero__bolts span:nth-child(2) { top: 0; right: 0; }
+.hero__bolts span:nth-child(3) { bottom: 0; left: 0; }
+.hero__bolts span:nth-child(4) { bottom: 0; right: 0; }
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  padding: 5.5rem 2rem 2.5rem;
 }
 
 @keyframes fadeIn {
@@ -744,14 +859,22 @@ body.vault-exploded .bomb-stage {
 }
 
 .title {
-  font-size: clamp(1.75rem, 5vw, 2.25rem);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   margin: 0 0 1rem;
-  line-height: 1.15;
+  line-height: 1.05;
+}
+
+.title--hero {
+  font-size: clamp(2.6rem, 9vw, 4.25rem);
+  margin-bottom: 0.85rem;
 }
 
 .title--md {
-  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-size: clamp(1.75rem, 5vw, 2.35rem);
 }
 
 .subtitle {
@@ -760,35 +883,22 @@ body.vault-exploded .bomb-stage {
   font-size: 1.05rem;
 }
 
-.rules {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 2rem;
-  text-align: left;
-}
-
-.rules li {
-  position: relative;
-  padding: 0.55rem 0 0.55rem 1.5rem;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.rules li:last-child {
-  border-bottom: none;
-}
-
-.rules li::before {
-  content: "▸";
-  position: absolute;
-  left: 0;
-  color: var(--accent);
+.stamp-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--chamber-accent, var(--accent)) 55%, var(--border));
+  background: color-mix(in srgb, var(--chamber-accent, var(--accent)) 10%, var(--bg-deep));
+  border-radius: 4px;
 }
 
 .btn {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;
   padding: 0.85rem 1.75rem;
@@ -805,11 +915,11 @@ body.vault-exploded .bomb-stage {
 .btn--primary {
   background: var(--accent);
   color: var(--bg-deep);
-  box-shadow: 0 0 24px var(--accent-glow);
+  box-shadow: 0 2px 0 #8a6412, 0 8px 20px var(--accent-glow);
 }
 
 .btn--primary:hover {
-  box-shadow: 0 0 32px var(--accent-glow);
+  box-shadow: 0 2px 0 #8a6412, 0 10px 24px var(--accent-glow);
 }
 
 .btn--pulse {
@@ -817,8 +927,8 @@ body.vault-exploded .bomb-stage {
 }
 
 @keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 24px var(--accent-glow); }
-  50% { box-shadow: 0 0 36px rgba(240, 160, 48, 0.55); }
+  0%, 100% { box-shadow: 0 2px 0 #8a6412, 0 8px 20px var(--accent-glow); }
+  50% { box-shadow: 0 2px 0 #8a6412, 0 10px 28px rgba(201, 146, 26, 0.45); }
 }
 
 .btn--secondary {
@@ -833,23 +943,44 @@ body.vault-exploded .bomb-stage {
 }
 
 .chamber-badge {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-  filter: drop-shadow(0 0 12px var(--accent-glow));
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 0.85rem;
+  font-size: 1.15rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* HUD */
+.chamber-badge.stamp-mark {
+  border: 1px solid color-mix(in srgb, var(--chamber-accent, var(--accent)) 55%, var(--border));
+  background: color-mix(in srgb, var(--chamber-accent, var(--accent)) 10%, var(--bg-deep));
+}
+
+.chamber-badge__img {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  display: block;
+}
+
+/* HUD — flat instrument strip, not a card */
 .hud {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  border-left: 3px solid var(--accent);
+  padding: 0.65rem 0.15rem 0.85rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  border-left: none;
+  box-shadow: none;
 }
 
 .hud__label {
@@ -949,51 +1080,53 @@ body.vault-exploded .bomb-stage {
   to { opacity: 0.55; }
 }
 
-/* Question */
+/* Question — single panel; options are list rows */
 .question-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 4px);
-  padding: 2rem 1.5rem;
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
   box-shadow: var(--shadow);
-  border-top: 2px solid rgba(240, 160, 48, 0.25);
+  border-top: 3px solid color-mix(in srgb, var(--chamber-accent, var(--accent)) 55%, transparent);
 }
 
 .question-card__text {
   font-size: 1.15rem;
   font-weight: 600;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
   line-height: 1.45;
 }
 
 .options {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0;
+  border-top: 1px solid var(--border);
 }
 
 .option {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 1rem 1.15rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 0.95rem 0.35rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   color: var(--text);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 0.95rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
 }
 
 .option:hover:not(:disabled) {
-  border-color: var(--accent);
-  background: rgba(240, 160, 48, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  padding-left: 0.5rem;
 }
 
 .option:active:not(:disabled) {
-  transform: scale(0.99);
+  transform: none;
 }
 
 .option:disabled {
@@ -1002,18 +1135,24 @@ body.vault-exploded .bomb-stage {
 }
 
 .option--correct {
-  border-color: var(--success);
+  border-color: transparent;
+  border-bottom-color: var(--border);
   background: rgba(61, 214, 140, 0.12);
+  box-shadow: inset 3px 0 0 var(--success);
 }
 
 .option--wrong {
-  border-color: var(--danger);
-  background: rgba(240, 113, 120, 0.1);
+  border-color: transparent;
+  border-bottom-color: var(--border);
+  background: rgba(224, 90, 98, 0.1);
+  box-shadow: inset 3px 0 0 var(--danger);
 }
 
 .option--missed {
-  border-color: var(--success);
+  border-color: transparent;
+  border-bottom-color: var(--border);
   opacity: 1;
+  box-shadow: inset 3px 0 0 var(--success);
 }
 
 .fill-form {
@@ -1036,13 +1175,13 @@ body.vault-exploded .bomb-stage {
 
 .fill-input::placeholder {
   color: var(--text-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
 }
 
 .fill-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: rgba(240, 160, 48, 0.06);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .fill-input:disabled {
@@ -1057,7 +1196,7 @@ body.vault-exploded .bomb-stage {
 
 .fill-input--wrong {
   border-color: var(--danger);
-  background: rgba(240, 113, 120, 0.1);
+  background: rgba(224, 90, 98, 0.1);
 }
 
 .fill-submit {
@@ -1067,24 +1206,25 @@ body.vault-exploded .bomb-stage {
 .checkbox-form {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0;
 }
 
 .checkbox-option {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 1rem 1.15rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 0.95rem 0.35rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .checkbox-option:has(.checkbox-option__input:checked:not(:disabled)) {
-  border-color: var(--accent);
-  background: rgba(240, 160, 48, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .checkbox-option:has(.checkbox-option__input:disabled) {
@@ -1110,22 +1250,25 @@ body.vault-exploded .bomb-stage {
 }
 
 .checkbox-option--correct {
-  border-color: var(--success);
+  border-bottom-color: var(--border);
   background: rgba(61, 214, 140, 0.12);
+  box-shadow: inset 3px 0 0 var(--success);
 }
 
 .checkbox-option--wrong {
-  border-color: var(--danger);
-  background: rgba(240, 113, 120, 0.1);
+  border-bottom-color: var(--border);
+  background: rgba(224, 90, 98, 0.1);
+  box-shadow: inset 3px 0 0 var(--danger);
 }
 
 .checkbox-option--missed {
-  border-color: var(--success);
+  border-bottom-color: var(--border);
   opacity: 0.85;
+  box-shadow: inset 3px 0 0 var(--success);
 }
 
 .checkbox-submit {
-  margin-top: 0.25rem;
+  margin-top: 0.75rem;
 }
 
 .hint {
@@ -1153,11 +1296,13 @@ body.vault-exploded .bomb-stage {
 
 /* Results */
 .results-total {
-  font-family: var(--font-mono);
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 8vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
   color: var(--accent);
   margin: 0 0 0.5rem;
+  line-height: 1;
 }
 
 .breakdown {
@@ -1172,10 +1317,11 @@ body.vault-exploded .bomb-stage {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 0.75rem 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   font-size: 0.9rem;
 }
 
@@ -1183,6 +1329,18 @@ body.vault-exploded .bomb-stage {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.breakdown__name .stamp-mark,
+.breakdown__icon {
+  min-width: 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font-size: 0.62rem;
+  object-fit: contain;
+  border: none;
+  background: transparent;
 }
 
 .breakdown__score {
@@ -1232,6 +1390,15 @@ body.vault-exploded .bomb-stage {
 
   .vault-door-strip {
     margin: -2rem -1.25rem 1.25rem;
+  }
+
+  .hero__content {
+    padding: 4.75rem 1.25rem 2rem;
+  }
+
+  .hero__plate {
+    top: 1.4rem;
+    padding: 0.45rem 0.85rem;
   }
 
   .hud {

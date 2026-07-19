@@ -325,8 +325,23 @@
       dot.className = "bomb-legend__dot";
       dot.style.background = chamber.wireColor || CHAMBER_COLORS[chamber.id] || "#8b9bb4";
       const label = document.createElement("span");
-      label.textContent = chamber.icon + " " + chamber.name + " (" + chamber.questions.length + ")";
+      label.textContent = chamber.name + " (" + chamber.questions.length + ")";
       item.appendChild(dot);
+      if (typeof chamber.icon === "string" && /\.(png|svg|webp|jpe?g)(\?|$)/i.test(chamber.icon)) {
+        const img = document.createElement("img");
+        img.className = "bomb-legend__icon";
+        img.src = chamber.icon;
+        img.alt = "";
+        img.width = 16;
+        img.height = 16;
+        img.decoding = "async";
+        item.appendChild(img);
+      } else if (chamber.iconLabel) {
+        const mark = document.createElement("span");
+        mark.className = "bomb-legend__mark";
+        mark.textContent = chamber.iconLabel;
+        item.appendChild(mark);
+      }
       item.appendChild(label);
       legendEl.appendChild(item);
     });

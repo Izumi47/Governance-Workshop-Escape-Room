@@ -7,6 +7,7 @@
   const PRACTICE_TIME_MIN = data.practice?.timeLimitMin ?? 90;
   const params = new URLSearchParams(window.location.search);
   const debriefForced = params.get("debrief") === "1";
+  const startChamberParam = params.get("chamber");
 
   const state = {
     totalScore: 0,
@@ -189,6 +190,86 @@
     if (els.playerNameError) els.playerNameError.hidden = true;
   }
 
+  function shuffleInPlace(arr) {
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function scrambleChamberQuestions() {
+    if (data.shuffleQuestions === false) return;
+    data.chambers.forEach(function (chamber) {
+      shuffleInPlace(chamber.questions);
+    });
+  }
+
+  function scrambleQuestionOptions(question) {
+    if (!question.options || !question.options.length) return;
+    if (isFillQuestion(question)) return;
+
+    const indexed = question.options.map(function (label, index) {
+      return { label: label, index: index };
+    });
+    shuffleInPlace(indexed);
+    question.options = indexed.map(function (item) {
+      return item.label;
+    });
+
+    const newPos = {};
+    indexed.forEach(function (item, newIndex) {
+      newPos[item.index] = newIndex;
+    });
+
+    if (Array.isArray(question.correct)) {
+      question.correct = question.correct.map(function (oldIndex) {
+        return newPos[oldIndex];
+      });
+    } else if (typeof question.correct === "number") {
+      question.correct = newPos[question.correct];
+    }
+  }
+
+  function scrambleAllOptions() {
+    if (data.shuffleOptions === false) return;
+    data.chambers.forEach(function (chamber) {
+      chamber.questions.forEach(scrambleQuestionOptions);
+    });
+  }
+
+  function resolveStartChamberIndex() {
+    if (!startChamberParam) return 0;
+    const asNum = parseInt(startChamberParam, 10);
+    if (!Number.isNaN(asNum) && asNum >= 0 && asNum < data.chambers.length) {
+      return asNum;
+    }
+    const key = startChamberParam.toLowerCase();
+    const byId = data.chambers.findIndex(function (ch) {
+      return ch.id.toLowerCase() === key;
+    });
+    if (byId !== -1) return byId;
+    const byName = data.chambers.findIndex(function (ch) {
+      return ch.name.toLowerCase().indexOf(key) !== -1;
+    });
+    return byName !== -1 ? byName : 0;
+  }
+
+  function applyStartChamberSkip() {
+    const idx = resolveStartChamberIndex();
+    if (idx <= 0) return;
+    state.chamberIndex = idx;
+    for (let i = 0; i < idx; i++) {
+      state.completedChambers.push(i);
+      const chamber = data.chambers[i];
+      for (let q = 0; q < chamber.questions.length; q++) {
+        if (window.BombWidget) BombWidget.cut(i, q);
+      }
+    }
+  }
+
   function resetGame() {
     clearTimer();
     state.totalScore = 0;
@@ -223,6 +304,8 @@
     state.mode = mode;
     state.playerName = getPlayerName();
     resetGame();
+    scrambleChamberQuestions();
+    scrambleAllOptions();
     state.mode = mode;
     state.playerName = getPlayerName();
     document.body.classList.toggle("mode-practice", isPractice());
@@ -236,9 +319,12 @@
   }
 
   function launchMission() {
+    applyStartChamberSkip();
     if (window.BombWidget) BombWidget.show();
     if (els.vaultProgress) els.vaultProgress.hidden = false;
-    if (window.GameUI) GameUI.updateProgress(0, 0, state.completedChambers);
+    if (window.GameUI) {
+      GameUI.updateProgress(state.chamberIndex, state.questionIndex, state.completedChambers);
+    }
     history.pushState({ game: true }, "");
     showChamberIntro();
   }
@@ -255,7 +341,11 @@
     const chamber = getChamber();
     els.chamberNumber.textContent = String(state.chamberIndex + 1);
     els.chamberTotal.textContent = String(data.chambers.length);
-    els.chamberIcon.textContent = chamber.icon;
+    if (window.GameUI) GameUI.applyChamberIcon(els.chamberIcon, chamber, "chamber-badge");
+    else {
+      els.chamberIcon.textContent = chamber.iconLabel || chamber.icon;
+      els.chamberIcon.className = "chamber-badge stamp-mark";
+    }
     els.chamberName.textContent = chamber.name;
     els.chamberDesc.textContent = chamber.description;
     if (window.GameUI) {
@@ -765,7 +855,8 @@
       const row = document.createElement("div");
       row.className = "breakdown__row";
       row.innerHTML =
-        '<span class="breakdown__name"><span>' + chamber.icon + "</span><span>" + chamber.name + "</span></span>" +
+        '<span class="breakdown__name">' + GameUI.chamberIconHtml(chamber, "breakdown__icon") +
+        "<span>" + chamber.name + "</span></span>" +
         '<span class="breakdown__score">' + state.chamberScores[chamber.id] + " pts</span>";
       els.breakdown.appendChild(row);
     });
@@ -809,8 +900,9 @@
   function updateSoundButton() {
     if (!els.btnSound) return;
     const muted = window.GameSounds && GameSounds.isMuted();
-    els.btnSound.textContent = muted ? "🔇" : "🔊";
+    els.btnSound.classList.toggle("sound-toggle--muted", !!muted);
     els.btnSound.setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
+    els.btnSound.setAttribute("title", muted ? "Unmute sound" : "Mute sound");
   }
 
   function onPopState() {

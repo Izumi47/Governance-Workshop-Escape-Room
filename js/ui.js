@@ -45,7 +45,45 @@
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
+  function isIconImage(icon) {
+    return typeof icon === "string" && /\.(png|svg|webp|jpe?g)(\?|$)/i.test(icon);
+  }
+
+  function chamberIconHtml(chamber, className) {
+    const label = chamber.iconLabel || chamber.name || "";
+    const cls = className || "chamber-icon";
+    if (isIconImage(chamber.icon)) {
+      return (
+        '<img class="' + cls + '" src="' + chamber.icon + '" alt="' + label +
+        '" width="48" height="48" decoding="async">'
+      );
+    }
+    return '<span class="' + cls + ' stamp-mark">' + (chamber.iconLabel || chamber.icon || "") + "</span>";
+  }
+
+  function applyChamberIcon(el, chamber, className) {
+    if (!el) return;
+    el.className = className || "chamber-badge";
+    el.innerHTML = "";
+    if (isIconImage(chamber.icon)) {
+      const img = document.createElement("img");
+      img.className = "chamber-badge__img";
+      img.src = chamber.icon;
+      img.alt = "";
+      img.width = 72;
+      img.height = 72;
+      img.decoding = "async";
+      el.appendChild(img);
+      return;
+    }
+    el.classList.add("stamp-mark");
+    el.textContent = chamber.iconLabel || chamber.icon || "";
+  }
+
   window.GameUI = {
+    chamberIconHtml: chamberIconHtml,
+    applyChamberIcon: applyChamberIcon,
+
     init: function (chamberData) {
       chambers = chamberData;
       reducedMotion = prefersReducedMotion();
@@ -95,7 +133,7 @@
         });
 
         step.innerHTML =
-          '<span class="vault-progress__icon">' + ch.icon + "</span>" +
+          chamberIconHtml(ch, "vault-progress__icon") +
           '<span class="vault-progress__label">' + ch.name.replace(" Chamber", "") + "</span>";
         step.appendChild(dots);
         const state = document.createElement("span");
