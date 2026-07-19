@@ -596,6 +596,8 @@ kbd {
 
 .screen__inner--success {
   border-color: rgba(61, 214, 140, 0.35);
+  max-width: 48rem;
+  width: 100%;
 }
 
 .tier-badge {

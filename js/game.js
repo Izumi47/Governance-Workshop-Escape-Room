@@ -79,6 +79,7 @@
     resultsPlayer: document.getElementById("results-player"),
     tierBadge: document.getElementById("tier-badge"),
     breakdown: document.getElementById("breakdown"),
+    answerReview: document.getElementById("answer-review"),
     resultsLeaderboard: document.getElementById("results-leaderboard"),
     startLeaderboard: document.getElementById("start-leaderboard"),
     failScore: document.getElementById("fail-score"),
@@ -838,6 +839,155 @@
     }) || tiers[tiers.length - 1];
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function findQuestionById(questionId) {
+    for (let i = 0; i < data.chambers.length; i += 1) {
+      const chamber = data.chambers[i];
+      for (let j = 0; j < chamber.questions.length; j += 1) {
+        if (chamber.questions[j].id === questionId) {
+          return { chamber: chamber, question: chamber.questions[j] };
+        }
+      }
+    }
+    return null;
+  }
+
+  function formatChoiceLabels(question, indices) {
+    if (!question.options || !indices || !indices.length) return "—";
+    return indices.map(function (index) {
+      return question.options[index] != null ? question.options[index] : "—";
+    }).join("; ");
+  }
+
+  function formatCorrectAnswer(question) {
+    if (isFillQuestion(question)) {
+      return getPrimaryFillAnswer(question);
+    }
+    if (isCheckboxQuestion(question)) {
+      return formatChoiceLabels(question, getCorrectIndices(question));
+    }
+    return question.options[question.correct];
+  }
+
+  function formatUserAnswer(question, answer) {
+    if (answer.timedOut || answer.response == null || answer.response === "") {
+      return answer.timedOut ? "No answer (time ran out)" : "No answer";
+    }
+    if (isFillQuestion(question)) {
+      return String(answer.response);
+    }
+    if (isCheckboxQuestion(question)) {
+      return formatChoiceLabels(question, answer.response);
+    }
+    return question.options[answer.response] != null
+      ? question.options[answer.response]
+      : "—";
+  }
+
+  function resultStatusLabel(answer) {
+    if (answer.timedOut) return "Timed out";
+    return answer.correct ? "Correct" : "Incorrect";
+  }
+
+  function renderAnswerReview() {
+    if (!els.answerReview) return;
+    els.answerReview.innerHTML = "";
+
+    if (!state.answers.length) {
+      els.answerReview.hidden = true;
+      return;
+    }
+
+    els.answerReview.hidden = false;
+
+    const heading = document.createElement("h3");
+    heading.className = "answer-review__heading";
+    heading.textContent = "Question review";
+    els.answerReview.appendChild(heading);
+
+    const summary = document.createElement("p");
+    summary.className = "answer-review__summary";
+    const correctCount = state.answers.filter(function (a) { return a.correct; }).length;
+    summary.textContent = correctCount + " of " + state.answers.length + " correct";
+    els.answerReview.appendChild(summary);
+
+    let currentChamberId = null;
+    let list = null;
+    let questionNumber = 0;
+
+    state.answers.forEach(function (answer) {
+      const found = findQuestionById(answer.questionId);
+      if (!found) return;
+
+      const chamber = found.chamber;
+      const question = found.question;
+
+      if (chamber.id !== currentChamberId) {
+        currentChamberId = chamber.id;
+        const chamberBlock = document.createElement("div");
+        chamberBlock.className = "answer-review__chamber";
+
+        const chamberTitle = document.createElement("h4");
+        chamberTitle.className = "answer-review__chamber-title";
+        chamberTitle.innerHTML =
+          GameUI.chamberIconHtml(chamber, "answer-review__chamber-icon") +
+          "<span>" + escapeHtml(chamber.name) + "</span>";
+        chamberBlock.appendChild(chamberTitle);
+
+        list = document.createElement("ol");
+        list.className = "answer-review__list";
+        chamberBlock.appendChild(list);
+        els.answerReview.appendChild(chamberBlock);
+      }
+
+      questionNumber += 1;
+      const status = resultStatusLabel(answer);
+      const statusClass = answer.correct
+        ? "answer-review__item--correct"
+        : answer.timedOut
+          ? "answer-review__item--timeout"
+          : "answer-review__item--wrong";
+      const userAnswerClass = answer.correct
+        ? "answer-review__chip--good"
+        : "answer-review__chip--bad";
+      const correctChipClass = answer.correct
+        ? "answer-review__chip--good"
+        : "answer-review__chip--key";
+
+      const item = document.createElement("li");
+      item.className = "answer-review__item " + statusClass;
+      item.innerHTML =
+        '<div class="answer-review__meta">' +
+          '<span class="answer-review__index">Q' + questionNumber + "</span>" +
+          '<span class="answer-review__status">' + escapeHtml(status) + "</span>" +
+          '<span class="answer-review__points">' + answer.points + " pts</span>" +
+        "</div>" +
+        '<p class="answer-review__question">' + escapeHtml(question.text) + "</p>" +
+        '<dl class="answer-review__answers">' +
+          '<div class="answer-review__row">' +
+            "<dt>Your answer</dt>" +
+            '<dd class="answer-review__chip ' + userAnswerClass + '">' +
+              escapeHtml(formatUserAnswer(question, answer)) +
+            "</dd>" +
+          "</div>" +
+          '<div class="answer-review__row">' +
+            "<dt>Correct answer</dt>" +
+            '<dd class="answer-review__chip ' + correctChipClass + '">' +
+              escapeHtml(formatCorrectAnswer(question)) +
+            "</dd>" +
+          "</div>" +
+        "</dl>";
+      list.appendChild(item);
+    });
+  }
+
   function showResults() {
     const tier = getTier(state.totalScore);
 
@@ -862,6 +1012,8 @@
         '<span class="breakdown__score">' + state.chamberScores[chamber.id] + " pts</span>";
       els.breakdown.appendChild(row);
     });
+
+    renderAnswerReview();
 
     if (!isPractice()) {
       GameUI.saveScore(state.playerName, state.totalScore, tier.eyebrow);
