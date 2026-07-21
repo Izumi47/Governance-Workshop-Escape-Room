@@ -12,7 +12,7 @@ window.GAME_DATA = {
   title: "The Data Governance Vault",
   timeBonusMax: 50,
 
-  // Shuffle question order within each chamber at the start of every session.
+  // Shuffle all questions into one mixed deck at session start (categories kept for progress).
   shuffleQuestions: true,
   // Shuffle multiple-choice / checkbox option order (remaps correct indices).
   shuffleOptions: true,

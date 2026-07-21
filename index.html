@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Governance Vault — Escape Room</title>
-  <meta name="description" content="Defuse the vault bomb by answering governance questions on Python, Power BI, ALM, and SOP. A workshop escape room challenge.">
+  <meta name="description" content="Keep Talking governance edition: one Defuser sees the bomb, four Experts use Python, Power BI, Power Apps, and SOP manuals. A workshop escape-room challenge.">
   <meta name="theme-color" content="#14161c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/styles-enhancements.css">
   <link rel="stylesheet" href="css/spectacle.css">
+  <link rel="stylesheet" href="css/gate-breach.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -39,6 +40,53 @@
       <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/>
     </svg>
     <span>SNIP</span>
+  </div>
+
+  <!-- Vault breach unlock sequence (first unlock only) -->
+  <div id="gate-breach" class="gate-breach" aria-hidden="true" role="presentation">
+    <div class="gate-breach__grid" aria-hidden="true"></div>
+    <div class="gate-breach__vignette" aria-hidden="true"></div>
+    <div class="gate-breach__door">
+      <div class="gate-breach__bloom" aria-hidden="true"></div>
+      <div class="gate-breach__plate">
+        <div class="gate-breach__ring" aria-hidden="true"></div>
+        <div class="gate-breach__ring gate-breach__ring--ticks" aria-hidden="true"></div>
+        <div class="gate-breach__dial" aria-hidden="true">
+          <span class="gate-breach__dial-mark"></span>
+        </div>
+        <div class="gate-breach__hub">
+          <span id="gate-breach-hub" class="gate-breach__hub-text">LOCKED</span>
+        </div>
+        <div class="gate-breach__bolts" aria-hidden="true">
+          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
+          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
+          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
+          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
+        </div>
+        <div class="gate-breach__iris" aria-hidden="true">
+          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
+          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
+          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
+          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
+        </div>
+      </div>
+    </div>
+    <div class="gate-breach__sparks" aria-hidden="true">
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
+    </div>
+    <div class="gate-breach__flash" aria-hidden="true"></div>
+    <div class="gate-breach__terminal" aria-live="polite">
+      <div class="gate-breach__terminal-line">&gt; AUTH TOKEN ACCEPTED<span class="gate-breach__cursor"></span></div>
+      <div class="gate-breach__terminal-line gate-breach__terminal-line--warn">&gt; SPINNING COMBINATION…</div>
+      <div class="gate-breach__terminal-line">&gt; RETRACTING BOLTS 8/8</div>
+      <div class="gate-breach__terminal-line">&gt; IRIS APERTURE OPEN</div>
+      <div class="gate-breach__terminal-line gate-breach__terminal-line--ok">&gt; VAULT ACCESS GRANTED</div>
+    </div>
   </div>
 
   <!-- Access gate (shown until token unlocks the vault) -->
@@ -148,7 +196,7 @@
 
     <div class="page-shell__main">
       <div id="timer-urgency" class="timer-urgency" aria-hidden="true"></div>
-      <nav id="vault-progress" class="vault-progress" hidden aria-label="Chamber progress"></nav>
+      <nav id="vault-progress" class="vault-progress" hidden aria-label="Tool category progress"></nav>
 
       <main id="app" class="app">
     <!-- Start -->
@@ -157,7 +205,7 @@
         <div class="hero__plane" aria-hidden="true">
           <div class="hero__hazard"></div>
           <div class="hero__plate">
-            <span class="hero__unit">DEFUSAL UNIT</span>
+            <span class="hero__unit">BOMB DEFUSAL TRAINING</span>
             <span class="hero__serial">DG-VLT-001</span>
           </div>
           <div class="hero__bolts">
@@ -165,19 +213,36 @@
           </div>
         </div>
         <div class="hero__content">
-          <p class="eyebrow">Workshop Challenge</p>
+          <p class="eyebrow">Keep Talking — Governance Edition</p>
           <h1 class="title title--hero">The Data Governance Vault</h1>
-          <p class="subtitle">Each question arms a bomb. Answer correctly to defuse — wrong answers cut 5 seconds.</p>
+          <p class="subtitle">
+            One Defuser. Four Experts. One bomb. Talk fast — or it detonates.
+          </p>
+
+          <div class="start-roles" aria-hidden="true">
+            <div class="start-roles__item start-roles__item--defuser">
+              <span class="start-roles__tag">×1</span>
+              <span class="start-roles__title">Defuser</span>
+              <span class="start-roles__desc">Sees the bomb &amp; questions</span>
+            </div>
+            <div class="start-roles__item">
+              <span class="start-roles__tag">×4</span>
+              <span class="start-roles__title">Experts</span>
+              <span class="start-roles__desc">Hold the manuals only</span>
+            </div>
+          </div>
 
           <label class="name-field" for="player-name">
-            <span class="name-field__label">Your name <span class="name-field__required" aria-hidden="true">*</span></span>
-            <input id="player-name" class="name-field__input" type="text" maxlength="24" placeholder="Enter your name" autocomplete="nickname" required aria-required="true">
-            <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
+            <span class="name-field__label">Group name <span class="name-field__required" aria-hidden="true">*</span></span>
+            <input id="player-name" class="name-field__input" type="text" maxlength="32" placeholder="e.g. Vault Breakers" autocomplete="organization" required aria-required="true">
+            <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your group name to begin.</span>
           </label>
 
           <div class="start-actions">
-            <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Enter the Vault</button>
+            <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Arm the Bomb</button>
           </div>
+
+          <p class="start-seat-note">Defuser sits opposite the Experts. Experts: no peeking at the screen.</p>
 
           <div id="start-leaderboard" class="leaderboard leaderboard--start" aria-label="Top scores" hidden></div>
         </div>
@@ -186,20 +251,53 @@
 
     <!-- Briefing -->
     <section id="screen-briefing" class="screen" aria-label="Briefing" hidden>
-      <div class="screen__inner screen__inner--vault">
+      <div class="screen__inner screen__inner--vault screen__inner--briefing">
         <div class="vault-door-strip" aria-hidden="true"></div>
         <p class="eyebrow">Mission Briefing</p>
-        <h2 class="title title--md">How to Survive the Vault</h2>
+        <h2 class="title title--md">Keep Talking and Nobody Explodes</h2>
+        <p class="briefing-lead">
+          This is a <strong>5-person cooperative</strong> defusal. Only the Defuser may look at this device.
+          Everyone else works from paper manuals — just like the classic bomb game.
+        </p>
+
+        <div class="briefing-roles">
+          <article class="briefing-role briefing-role--defuser">
+            <h3 class="briefing-role__title">Defuser <span>(1)</span></h3>
+            <ul>
+              <li>Sits <strong>opposite</strong> the Experts</li>
+              <li>Only person who can see the screen / bomb</li>
+              <li>Reads questions aloud and describes what you see</li>
+              <li>Enters answers the Experts tell you</li>
+            </ul>
+          </article>
+          <article class="briefing-role">
+            <h3 class="briefing-role__title">Experts <span>(4)</span></h3>
+            <ul>
+              <li><strong>Must not</strong> look at the Defuser’s screen</li>
+              <li>Each holds one governance manual</li>
+              <li>Listen carefully and look up the rule</li>
+              <li>Tell the Defuser what to select — clearly and fast</li>
+            </ul>
+          </article>
+        </div>
+
+        <h3 class="briefing-manuals-title">Expert manuals</h3>
+        <ul class="briefing-manuals">
+          <li><span class="briefing-manuals__swatch" style="--swatch:#3dd68c"></span> <strong>Python</strong> — Python governance standard</li>
+          <li><span class="briefing-manuals__swatch" style="--swatch:#59c2ff"></span> <strong>Power BI</strong> — Power BI governance standard</li>
+          <li><span class="briefing-manuals__swatch" style="--swatch:#f0a030"></span> <strong>Power Apps / ALM</strong> — go-live, handover, ownership</li>
+          <li><span class="briefing-manuals__swatch" style="--swatch:#f07178"></span> <strong>SOP</strong> — intake, SharePoint, approvals</li>
+        </ul>
+
         <ul class="briefing-list">
-          <li><strong>One bomb per question</strong> — defuse it by selecting the correct answer.</li>
-          <li><strong>Wrong answer</strong> cuts the timer by <strong>5 seconds</strong>. Keep trying until correct.</li>
-          <li><strong>Timer hits zero</strong> → that bomb detonates (0 pts) → mission continues to the next question.</li>
-          <li><strong>After every question</strong> you see the answer and justification — then Continue.</li>
-          <li><strong>Chambers:</strong> Python → Power BI → ALM → SOP. Faster correct answers earn a speed bonus.</li>
-          <li>Use keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
+          <li><strong>40 armed modules</strong> — mixed across the four manuals. Progress dots show which manuals you’ve cleared.</li>
+          <li><strong>Wrong answer</strong> cuts the timer by <strong>5 seconds</strong>. Keep talking until it’s right.</li>
+          <li><strong>Timer hits zero</strong> → that module detonates (0 pts) → next module. The mission continues.</li>
+          <li><strong>After each module</strong> — short answer reveal for the room, then Continue (or auto after 10s).</li>
+          <li>Defuser tips: keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
         </ul>
         <p id="briefing-mode" class="briefing-mode"></p>
-        <button id="btn-briefing-go" class="btn btn--primary" type="button">Begin Mission</button>
+        <button id="btn-briefing-go" class="btn btn--primary" type="button">Start Defusal</button>
       </div>
     </section>
 
@@ -276,7 +374,6 @@
     <section id="screen-results" class="screen" aria-label="Results" hidden>
       <div class="screen__inner screen__inner--vault screen__inner--success">
         <div id="tier-badge" class="tier-badge" aria-hidden="true"></div>
-        <p class="eyebrow" id="results-tier-eyebrow">Escape Complete</p>
         <h2 class="title title--md" id="results-title">You Escaped!</h2>
         <p class="results-total"><span id="results-score">0</span> points</p>
         <p class="subtitle" id="results-message"></p>
@@ -295,9 +392,9 @@
     </div>
   </div>
 
+  <script src="js/sounds.js"></script>
   <script src="js/gate.js"></script>
   <script src="js/questions.js"></script>
-  <script src="js/sounds.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/bomb.js"></script>
   <script src="js/game.js"></script>

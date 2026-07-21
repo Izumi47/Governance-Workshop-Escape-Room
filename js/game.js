@@ -6,24 +6,28 @@
   const RING_CIRCUMFERENCE = 97.4;
   const PRACTICE_TIME_MIN = data.practice?.timeLimitMin ?? 90;
   const WRONG_PENALTY_SECONDS = 5;
+  const REVIEW_AUTO_CONTINUE_SECONDS = 10;
   const params = new URLSearchParams(window.location.search);
   const startChamberParam = params.get("chamber");
+  const startQuestionParam = params.get("q");
 
   const state = {
     totalScore: 0,
-    chamberIndex: 0,
-    questionIndex: 0,
+    deck: [],
+    deckIndex: 0,
+    categoryAnswered: [],
     chamberScores: {},
     answers: [],
-    completedChambers: [],
     timerId: null,
     timeLeft: 0,
     timeLimit: 0,
     locked: false,
     awaitingContinue: false,
     resolvingQuestion: false,
+    reviewTimerId: null,
+    reviewTimeLeft: 0,
     mode: "full",
-    playerName: "Agent",
+    playerName: "Group",
     lastTickSecond: -1
   };
 
@@ -73,7 +77,6 @@
     clearChamberName: document.getElementById("clear-chamber-name"),
     clearChamberMsg: document.getElementById("clear-chamber-msg"),
     clearChamberScore: document.getElementById("clear-chamber-score"),
-    resultsTierEyebrow: document.getElementById("results-tier-eyebrow"),
     resultsTitle: document.getElementById("results-title"),
     resultsScore: document.getElementById("results-score"),
     resultsMessage: document.getElementById("results-message"),
@@ -119,12 +122,39 @@
     return state.mode === "practice";
   }
 
+  function getDeckEntry() {
+    return state.deck[state.deckIndex] || null;
+  }
+
   function getChamber() {
-    return data.chambers[state.chamberIndex];
+    const entry = getDeckEntry();
+    return entry ? entry.chamber : data.chambers[0];
   }
 
   function getQuestion() {
-    return getChamber().questions[state.questionIndex];
+    const entry = getDeckEntry();
+    return entry ? entry.question : null;
+  }
+
+  function syncCategoryProgress() {
+    if (!window.GameUI) return;
+    const entry = getDeckEntry();
+    const activeChamberIndex = entry ? entry.chamberIndex : -1;
+    GameUI.updateCategoryProgress(state.categoryAnswered, activeChamberIndex);
+  }
+
+  function markCategoryAnswered() {
+    const entry = getDeckEntry();
+    if (!entry) return;
+    const count = state.categoryAnswered[entry.chamberIndex] || 0;
+    const max = entry.chamber.questions.length;
+    if (count < max) {
+      state.categoryAnswered[entry.chamberIndex] = count + 1;
+    }
+    syncCategoryProgress();
+    if (window.GameUI) {
+      GameUI.flashCategoryProgress(entry.chamberIndex, state.categoryAnswered[entry.chamberIndex] - 1);
+    }
   }
 
   function getQuestionType(question) {
@@ -243,10 +273,61 @@
   }
 
   function scrambleChamberQuestions() {
-    if (data.shuffleQuestions === false) return;
-    data.chambers.forEach(function (chamber) {
-      shuffleInPlace(chamber.questions);
+    // Kept for compatibility — session deck is built/shuffled in buildQuestionDeck().
+  }
+
+  function buildQuestionDeck() {
+    const startIdx = resolveStartChamberIndex();
+    const deck = [];
+
+    data.chambers.forEach(function (chamber, chamberIndex) {
+      if (chamberIndex < startIdx) return;
+      chamber.questions.forEach(function (question, localIndex) {
+        deck.push({
+          chamber: chamber,
+          chamberIndex: chamberIndex,
+          localIndex: localIndex,
+          question: question
+        });
+      });
     });
+
+    if (data.shuffleQuestions !== false && !startQuestionParam) {
+      shuffleInPlace(deck);
+    }
+
+    state.deck = deck;
+    state.deckIndex = 0;
+    state.categoryAnswered = data.chambers.map(function (chamber, i) {
+      return i < startIdx ? chamber.questions.length : 0;
+    });
+
+    applyStartQuestionJump();
+  }
+
+  /** Debug: ?q=40 jumps to that 1-based question in the deck (skips shuffle when set). */
+  function applyStartQuestionJump() {
+    if (!startQuestionParam || !state.deck.length) return;
+
+    let target = parseInt(startQuestionParam, 10);
+    if (String(startQuestionParam).toLowerCase() === "last") {
+      target = state.deck.length;
+    }
+    if (Number.isNaN(target)) return;
+
+    target = Math.max(1, Math.min(target, state.deck.length));
+    const jumpTo = target - 1;
+
+    for (let i = 0; i < jumpTo; i += 1) {
+      const entry = state.deck[i];
+      const max = entry.chamber.questions.length;
+      const count = state.categoryAnswered[entry.chamberIndex] || 0;
+      if (count < max) {
+        state.categoryAnswered[entry.chamberIndex] = count + 1;
+      }
+    }
+
+    state.deckIndex = jumpTo;
   }
 
   function scrambleQuestionOptions(question) {
@@ -300,22 +381,18 @@
   }
 
   function applyStartChamberSkip() {
-    const idx = resolveStartChamberIndex();
-    if (idx <= 0) return;
-    state.chamberIndex = idx;
-    for (let i = 0; i < idx; i++) {
-      state.completedChambers.push(i);
-    }
+    // Category pre-fill + deck filtering happen inside buildQuestionDeck().
   }
 
   function resetGame() {
     clearTimer();
+    clearReviewTimer();
     state.totalScore = 0;
-    state.chamberIndex = 0;
-    state.questionIndex = 0;
+    state.deck = [];
+    state.deckIndex = 0;
+    state.categoryAnswered = data.chambers.map(function () { return 0; });
     state.chamberScores = {};
     state.answers = [];
-    state.completedChambers = [];
     state.locked = false;
     state.awaitingContinue = false;
     state.resolvingQuestion = false;
@@ -344,29 +421,27 @@
     state.mode = mode;
     state.playerName = getPlayerName();
     resetGame();
-    scrambleChamberQuestions();
     scrambleAllOptions();
+    buildQuestionDeck();
     state.mode = mode;
     state.playerName = getPlayerName();
     document.body.classList.toggle("mode-practice", isPractice());
 
     if (els.briefingMode) {
       els.briefingMode.textContent = isPractice()
-        ? "Practice mode: extended timers. Wrong answers cut 5s; timeout detonates that question only."
-        : "Full mission: each question has its own bomb. Wrong answers cut 5s. Timeout = 0 pts, then next question.";
+        ? "Practice mode: extended timers. Experts still work from manuals — Defuser only on screen."
+        : "Live defusal: Defuser on this device. Experts: manuals only — no screen peeking.";
     }
     showScreen("briefing", { dramatic: true });
   }
 
   function launchMission() {
-    applyStartChamberSkip();
+    if (!state.deck.length) buildQuestionDeck();
     if (window.BombWidget) BombWidget.show();
     if (els.vaultProgress) els.vaultProgress.hidden = false;
-    if (window.GameUI) {
-      GameUI.updateProgress(state.chamberIndex, state.questionIndex, state.completedChambers);
-    }
+    syncCategoryProgress();
     history.pushState({ game: true }, "");
-    showChamberIntro();
+    showQuestion();
   }
 
   function showChamberIntro() {
@@ -423,9 +498,32 @@
     }
   }
 
+  function focusFillInput(input) {
+    if (!input) return;
+    input.setAttribute("autofocus", "autofocus");
+    const tryFocus = function () {
+      try {
+        input.focus({ preventScroll: true });
+      } catch (e) {
+        input.focus();
+      }
+    };
+    tryFocus();
+    window.requestAnimationFrame(tryFocus);
+    window.setTimeout(tryFocus, 50);
+    window.setTimeout(tryFocus, 200);
+  }
+
   function showQuestion() {
-    const chamber = getChamber();
-    const question = getQuestion();
+    const entry = getDeckEntry();
+    if (!entry) {
+      showResults();
+      return;
+    }
+
+    clearReviewTimer();
+    const chamber = entry.chamber;
+    const question = entry.question;
     const qType = getQuestionType(question);
     state.locked = false;
     state.awaitingContinue = false;
@@ -445,13 +543,13 @@
       GameUI.hideDebrief();
       GameUI.setChamberTheme(chamber);
       GameUI.setTypeBadge(qType);
-      GameUI.updateProgress(state.chamberIndex, state.questionIndex, state.completedChambers);
     }
+    syncCategoryProgress();
 
     els.hudScore.textContent = String(state.totalScore);
-    els.hudChamber.textContent = chamber.name;
+    els.hudChamber.textContent = chamber.name.replace(" Chamber", "");
     els.hudProgress.textContent =
-      "Question " + (state.questionIndex + 1) + " of " + chamber.questions.length;
+      "Question " + (state.deckIndex + 1) + " of " + state.deck.length;
     els.questionText.textContent = question.text;
     els.options.innerHTML = "";
 
@@ -488,7 +586,7 @@
       playQuestionEnter();
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
-      input.focus();
+      focusFillInput(input);
     } else if (isCheckboxQuestion(question)) {
       els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cut 5 seconds.";
       els.questionHint.className = "hint";
@@ -741,17 +839,109 @@
     return "Incorrect — answer: " + question.options[question.correct];
   }
 
+  function clearReviewTimer() {
+    if (state.reviewTimerId !== null) {
+      window.clearInterval(state.reviewTimerId);
+      state.reviewTimerId = null;
+    }
+    state.reviewTimeLeft = 0;
+    const timerEl = document.getElementById("review-auto-timer");
+    if (timerEl) timerEl.remove();
+  }
+
+  function updateReviewAutoTimerDisplay() {
+    const timerEl = document.getElementById("review-auto-timer");
+    if (!timerEl) return;
+    const secs = Math.max(0, state.reviewTimeLeft);
+    timerEl.innerHTML =
+      '<span class="review-auto-timer__value">' + secs + "</span>" +
+      '<span class="review-auto-timer__unit">s</span>';
+    timerEl.setAttribute("aria-label", "Continuing automatically in " + secs + " seconds");
+    timerEl.classList.toggle("review-auto-timer--urgent", secs <= 3);
+  }
+
+  function ensureReviewTimerEl() {
+    let row = els.options.querySelector(".review-continue-row");
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "review-continue-row";
+      els.options.appendChild(row);
+    }
+    let timerEl = document.getElementById("review-auto-timer");
+    if (!timerEl) {
+      timerEl = document.createElement("span");
+      timerEl.id = "review-auto-timer";
+      timerEl.className = "review-auto-timer";
+      timerEl.title = "Auto-continues when this hits 0";
+      timerEl.setAttribute("role", "timer");
+      timerEl.setAttribute("aria-live", "polite");
+      row.appendChild(timerEl);
+    }
+    return timerEl;
+  }
+
+  function startReviewAutoContinue() {
+    if (state.reviewTimerId !== null) {
+      window.clearInterval(state.reviewTimerId);
+      state.reviewTimerId = null;
+    }
+    state.reviewTimeLeft = REVIEW_AUTO_CONTINUE_SECONDS;
+    ensureReviewTimerEl();
+    updateReviewAutoTimerDisplay();
+
+    state.reviewTimerId = window.setInterval(function () {
+      state.reviewTimeLeft -= 1;
+      updateReviewAutoTimerDisplay();
+      if (state.reviewTimeLeft <= 0) {
+        clearReviewTimer();
+        continueAfterDebrief();
+      }
+    }, 1000);
+  }
+
+  function armReviewContinueButton() {
+    clearReviewTimer();
+
+    let btn = els.options.querySelector(".fill-submit, .checkbox-submit, .review-continue");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn--primary review-continue";
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Continue";
+    btn.classList.add("review-continue");
+    btn.setAttribute("type", "button");
+
+    const fresh = btn.cloneNode(true);
+    if (btn.parentNode) btn.remove();
+
+    let row = els.options.querySelector(".review-continue-row");
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "review-continue-row";
+      els.options.appendChild(row);
+    }
+    row.innerHTML = "";
+    row.appendChild(fresh);
+
+    fresh.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      continueAfterDebrief();
+    });
+    fresh.focus();
+    startReviewAutoContinue();
+  }
+
   function revealAndWait(question, result) {
     const qType = getQuestionType(question);
     state.awaitingContinue = true;
     lockQuestion();
 
     if (window.GameUI) {
-      GameUI.showDebrief(question, qType, true, function () {
-        continueAfterDebrief();
-      });
-    } else {
-      window.setTimeout(continueAfterDebrief, 2500);
+      GameUI.showDebrief(question, qType, true);
     }
 
     els.questionHint.textContent = buildFeedbackMessage(question, result);
@@ -761,11 +951,14 @@
     } else {
       els.hudScore.textContent = String(state.totalScore);
     }
+
+    armReviewContinueButton();
   }
 
   function continueAfterDebrief() {
     if (!state.awaitingContinue) return;
     state.awaitingContinue = false;
+    clearReviewTimer();
     if (window.GameUI) GameUI.hideDebrief();
     advanceQuestion();
   }
@@ -789,10 +982,10 @@
     if (window.GameSounds) GameSounds.correct();
     if (window.GameUI) {
       GameUI.triggerWireSnip();
-      GameUI.flashWireCut(state.chamberIndex, state.questionIndex);
       GameUI.showScorePop(result.points, result.bonus);
       if (GameUI.celebrateCorrect) GameUI.celebrateCorrect();
     }
+    markCategoryAnswered();
 
     revealAndWait(question, result);
   }
@@ -831,15 +1024,16 @@
     if (applyWrongPenalty()) return;
 
     const input = els.options.querySelector(".fill-input");
+    unlockQuestionInputs();
+
     window.setTimeout(function () {
-      if (state.awaitingContinue || state.locked && state.timeLeft <= 0) return;
-      if (input) {
-        input.classList.remove("fill-input--wrong");
-        input.value = "";
-        input.focus();
-      }
-      unlockQuestionInputs();
-    }, 600);
+      if (state.awaitingContinue || state.resolvingQuestion) return;
+      if (!input || !input.isConnected) return;
+      input.classList.remove("fill-input--wrong");
+      input.value = "";
+      input.disabled = false;
+      focusFillInput(input);
+    }, 30);
   }
 
   function handleWrongCheckbox(question, selected) {
@@ -931,6 +1125,7 @@
 
     const question = getQuestion();
     const result = recordAnswer(question, null, true);
+    markCategoryAnswered();
 
     if (isFillQuestion(question)) {
       els.questionHint.textContent = "Time's up — bomb detonated. 0 points for this question.";
@@ -962,47 +1157,20 @@
   }
 
   function advanceQuestion() {
-    const chamber = getChamber();
-    state.questionIndex += 1;
-
-    if (state.questionIndex < chamber.questions.length) {
+    state.deckIndex += 1;
+    if (state.deckIndex < state.deck.length) {
       showQuestion();
     } else {
-      state.completedChambers.push(state.chamberIndex);
-      showChamberClear();
+      showResults();
     }
   }
 
   function showChamberClear() {
-    const chamber = getChamber();
-    const score = state.chamberScores[chamber.id];
-    const isLast = state.chamberIndex >= data.chambers.length - 1;
-
-    els.clearChamberName.textContent = chamber.name;
-    els.clearChamberMsg.textContent = isLast
-      ? "The final door opens. You've reached the exit."
-      : "The door grinds open. Onward to the next chamber.";
-    els.clearChamberScore.textContent = "+" + score + " points in this chamber";
-    els.btnNextChamber.textContent = isLast ? "See Results" : "Next Chamber";
-
-    if (window.GameUI) GameUI.updateProgress(state.chamberIndex, chamber.questions.length, state.completedChambers);
-    showScreen("chamberClear", {
-      dramatic: true,
-      onReveal: function () {
-        if (window.GameUI) GameUI.animateScreen("chamberClear", "anim-door-open");
-        if (window.GameSounds) GameSounds.fanfare();
-      }
-    });
+    showResults();
   }
 
   function nextChamber() {
-    if (state.chamberIndex >= data.chambers.length - 1) {
-      showResults();
-      return;
-    }
-    state.chamberIndex += 1;
-    state.questionIndex = 0;
-    showChamberIntro();
+    showResults();
   }
 
   function getTier(score) {
@@ -1175,11 +1343,10 @@
   function showResults() {
     const tier = getTier(state.totalScore);
 
-    els.resultsTierEyebrow.textContent = tier.eyebrow;
     els.resultsTitle.textContent = tier.title;
     els.resultsScore.textContent = String(state.totalScore);
     els.resultsMessage.textContent = tier.message;
-    els.resultsPlayer.textContent = state.playerName + (isPractice() ? " · Practice Run" : "");
+    els.resultsPlayer.textContent = "Group: " + state.playerName + (isPractice() ? " · Practice Run" : "");
 
     if (els.tierBadge) {
       els.tierBadge.textContent = tier.eyebrow;

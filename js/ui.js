@@ -150,18 +150,34 @@
     },
 
     updateProgress: function (chamberIndex, questionIndex, completedChambers) {
+      const answered = chambers.map(function (ch, i) {
+        if (completedChambers && completedChambers.indexOf(i) !== -1) return ch.questions.length;
+        if (i < chamberIndex) return ch.questions.length;
+        if (i === chamberIndex) return questionIndex;
+        return 0;
+      });
+      this.updateCategoryProgress(answered, chamberIndex);
+    },
+
+    /**
+     * @param {number[]} categoryAnswered - answered count per tool/chamber
+     * @param {number} activeChamberIndex - chamber of the current question (-1 none)
+     */
+    updateCategoryProgress: function (categoryAnswered, activeChamberIndex) {
       if (!progressEl) return;
       progressEl.querySelectorAll(".vault-progress__step").forEach(function (step, i) {
         step.classList.remove(
           "vault-progress__step--done",
           "vault-progress__step--active",
-          "vault-progress__step--locked"
+          "vault-progress__step--locked",
+          "vault-progress__step--partial"
         );
         const stateEl = step.querySelector(".vault-progress__state");
         const dots = step.querySelectorAll(".vault-progress__dot");
         const qTotal = chambers[i].questions.length;
-        const isDone = i < chamberIndex || (completedChambers && completedChambers.indexOf(i) !== -1);
-        const isActive = i === chamberIndex && !isDone;
+        const doneCount = Math.min(categoryAnswered[i] || 0, qTotal);
+        const isDone = doneCount >= qTotal;
+        const isActive = i === activeChamberIndex && !isDone;
 
         dots.forEach(function (dot, qi) {
           dot.classList.remove(
@@ -169,9 +185,9 @@
             "vault-progress__dot--active",
             "vault-progress__dot--pending"
           );
-          if (isDone || qi < questionIndex) {
+          if (qi < doneCount) {
             dot.classList.add("vault-progress__dot--done");
-          } else if (isActive && qi === questionIndex) {
+          } else if (isActive && qi === doneCount) {
             dot.classList.add("vault-progress__dot--active");
           } else {
             dot.classList.add("vault-progress__dot--pending");
@@ -192,12 +208,19 @@
           }
         } else if (isActive) {
           step.classList.add("vault-progress__step--active");
-          stateEl.textContent = "Q" + (questionIndex + 1) + "/" + qTotal;
+          stateEl.textContent = doneCount + "/" + qTotal;
+        } else if (doneCount > 0) {
+          step.classList.add("vault-progress__step--partial");
+          stateEl.textContent = doneCount + "/" + qTotal;
         } else {
           step.classList.add("vault-progress__step--locked");
-          stateEl.textContent = "🔒";
+          stateEl.textContent = "0/" + qTotal;
         }
       });
+    },
+
+    flashCategoryProgress: function (chamberIndex, answeredDotIndex) {
+      this.flashWireCut(chamberIndex, answeredDotIndex);
     },
 
     setChamberTheme: function (chamber) {
@@ -228,30 +251,53 @@
       if (typeBadgeEl) typeBadgeEl.hidden = true;
     },
 
-    showDebrief: function (question, type, show, onContinue) {
+    showDebrief: function (question, type, show) {
       if (!debriefPanelEl || !show) {
         if (debriefPanelEl) debriefPanelEl.hidden = true;
         return;
       }
-      const answerText = GameUI.getCorrectAnswerText(question, type);
+      const answerHtml = GameUI.getCorrectAnswerHtml(question, type);
       const explain = question.explain
         ? '<p class="debrief-panel__explain">' + question.explain + "</p>"
         : "";
       debriefPanelEl.innerHTML =
         '<p class="debrief-panel__label">Answer &amp; justification</p>' +
-        '<p class="debrief-panel__answer">' + answerText + "</p>" +
-        explain +
-        '<button type="button" class="btn btn--primary debrief-panel__continue" id="btn-debrief-continue">Continue</button>';
+        '<div class="debrief-panel__answer">' + answerHtml + "</div>" +
+        explain;
       debriefPanelEl.hidden = false;
-      const btn = document.getElementById("btn-debrief-continue");
-      if (btn && typeof onContinue === "function") {
-        btn.addEventListener("click", onContinue);
-        btn.focus();
-      }
     },
 
     hideDebrief: function () {
       if (debriefPanelEl) debriefPanelEl.hidden = true;
+    },
+
+    escapeHtml: function (value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    },
+
+    getCorrectAnswerHtml: function (question, type) {
+      if (type === "fill") {
+        const answers = question.answers || [question.answer];
+        return "<p><strong>Correct answer:</strong> " + GameUI.escapeHtml(answers[0]) + "</p>";
+      }
+      if (type === "checkbox") {
+        const items = question.correct.map(function (i) {
+          return "<li>" + GameUI.escapeHtml(question.options[i]) + "</li>";
+        }).join("");
+        return (
+          "<p class=\"debrief-panel__answer-label\"><strong>Correct options:</strong></p>" +
+          "<ul class=\"debrief-panel__list\">" + items + "</ul>"
+        );
+      }
+      return (
+        "<p><strong>Correct answer:</strong> " +
+        GameUI.escapeHtml(question.options[question.correct]) +
+        "</p>"
+      );
     },
 
     getCorrectAnswerText: function (question, type) {

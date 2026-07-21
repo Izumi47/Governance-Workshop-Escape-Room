@@ -138,6 +138,32 @@
     playCurrentTrack();
   }
 
+  function tryStartMusic() {
+    if (muted) return;
+    musicWanted = true;
+    ensureMusicAudio();
+    if (!musicStarted) {
+      musicStarted = true;
+      musicIndex = 0;
+    }
+    playCurrentTrack();
+  }
+
+  let gestureFallbackBound = false;
+  function bindAutoplayGestureFallback() {
+    if (gestureFallbackBound) return;
+    gestureFallbackBound = true;
+    const resume = function () {
+      GameSounds.unlock();
+      document.removeEventListener("pointerdown", resume, true);
+      document.removeEventListener("keydown", resume, true);
+      document.removeEventListener("touchstart", resume, true);
+    };
+    document.addEventListener("pointerdown", resume, true);
+    document.addEventListener("keydown", resume, true);
+    document.addEventListener("touchstart", resume, { capture: true, passive: true });
+  }
+
   function pauseBackgroundMusic() {
     if (musicAudio) musicAudio.pause();
   }
@@ -158,9 +184,21 @@
       if (stored === "1") muted = true;
       musicVolume = loadStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
       sfxVolume = loadStoredVolume(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+
+      // Want BGM as soon as the app loads (may be blocked until a gesture).
+      musicWanted = true;
+      tryStartMusic();
+      bindAutoplayGestureFallback();
+
+      document.addEventListener("vault:unlocked", function () {
+        GameSounds.unlock();
+      });
+      if (window.VaultGate && VaultGate.isUnlocked && VaultGate.isUnlocked()) {
+        GameSounds.unlock();
+      }
     },
 
-    /** Resume AudioContext + start looping BGM playlist (call from a user gesture). */
+    /** Resume AudioContext + start looping BGM playlist. */
     unlock: function () {
       ensureContext();
       startBackgroundMusic();

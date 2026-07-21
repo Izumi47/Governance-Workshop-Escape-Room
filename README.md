@@ -1,6 +1,6 @@
 # The Data Governance Vault
 
-A browser-based escape room quiz for governance workshops. Answer timed questions on **Python**, **Power BI**, **ALM**, and **SOP** to cut wires on a defusal bomb and escape the vault — before the timer hits zero.
+A **Keep Talking and Nobody Explodes**-style workshop game: **1 Defuser** sees the bomb on screen; **4 Experts** use Python, Power BI, Power Apps/ALM, and SOP manuals only. Talk fast — or the module detonates.
 
 **Live app:** [governance-workshop-escape-room.vercel.app](https://governance-workshop-escape-room.vercel.app)
 
@@ -8,12 +8,13 @@ A browser-based escape room quiz for governance workshops. Answer timed question
 
 ## How it works
 
-1. Enter your name and start the mission.
-2. Read the briefing, then progress through **4 chambers** (10 questions each).
-3. **Each question arms its own bomb** — answer correctly to defuse it.
-4. **Wrong answers cut 5 seconds** off the timer; keep trying until correct (or time runs out).
-5. If the **timer hits zero**, that bomb detonates (0 pts for the question) and the mission continues.
-6. After every question, review the **answer and justification**, then Continue.
+1. Enter your **group name** (Defuser operates this screen).
+2. Read the briefing — assign **1 Defuser** + **4 Experts** (Python, Power BI, Power Apps/ALM, SOP manuals).
+3. Defuser sits **opposite** the Experts. Experts must **not** look at the screen.
+4. Play **40 mixed modules**. Defuser reads aloud; Experts look up the manuals and call the answer.
+5. **Wrong answers cut 5 seconds**; timer zero detonates that module (0 pts) and continues.
+6. Tool progress updates when a module from that manual is finished.
+7. After each module, review the answer, then Continue (or auto after 10s).
 
 Question types: multiple choice, fill-in-the-blank, and select-all-that-apply.
 
@@ -28,8 +29,14 @@ The app opens behind a **password gate**. Participants need the access token.
 | **Default token** | `DG-VAULT-2026` |
 | Unlock via URL | `?token=DG-VAULT-2026` |
 | Session | Stays unlocked in that browser tab (`sessionStorage`) until the tab closes |
+| First unlock | ~3.5s vault **breach animation** (dial, bolts, iris) — skipped on refresh / `prefers-reduced-motion` |
 
 Change the token: edit the SHA-256 hash in `js/gate.js` (instructions in that file).
+
+Replay the unlock cinema in a tab that already unlocked:
+```js
+sessionStorage.removeItem("vault-access-ok"); location.reload();
+```
 
 ---
 
@@ -39,9 +46,8 @@ Change the token: edit the SHA-256 hash in `js/gate.js` (instructions in that fi
 |----------|-----|
 | **Participants** | `https://governance-workshop-escape-room.vercel.app` |
 | **Facilitator** (local leaderboard) | `https://governance-workshop-escape-room.vercel.app/?facilitator=1` |
-| **Debrief mode** (explanations after each question) | Add `?debrief=1` |
 
-The leaderboard is **hidden from participants** by default. Facilitator mode shows a top-10 board stored in that browser only (not a shared room ranking unless you add a backend).
+Debrief (answer + justification) always shows after each question. The leaderboard is **hidden from participants** by default. Facilitator mode shows a top-10 board stored in that browser only (not a shared room ranking unless you add a backend).
 
 ---
 
@@ -79,16 +85,20 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 ## Project structure
 
 ```
-├── index.html              # App shell & screens
+├── index.html              # App shell, gate, breach overlay
 ├── js/
+│   ├── sounds.js           # Web Audio SFX + BGM
+│   ├── gate.js             # Access token + breach unlock
 │   ├── questions.js        # Game content (edit this)
-│   ├── game.js             # Logic, timers, scoring
-│   ├── bomb.js             # Bomb SVG & wire animations
 │   ├── ui.js               # Progress map, effects, leaderboard
-│   └── sounds.js           # Web Audio effects
+│   ├── bomb.js             # Per-question timer bomb
+│   └── game.js             # Logic, timers, scoring
 ├── css/
 │   ├── styles.css          # Core layout & theme
-│   └── styles-enhancements.css
+│   ├── styles-enhancements.css
+│   ├── spectacle.css       # Shutter / triumph motion
+│   └── gate-breach.css     # Unlock cinema
+├── assets/audio/           # BGM playlist
 ├── favicon.svg
 └── og-image.svg
 ```

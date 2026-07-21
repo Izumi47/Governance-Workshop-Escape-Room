@@ -14,6 +14,7 @@
   const STORAGE_KEY = "vault-access-ok";
   const EXPECTED_HASH =
     "20b1979e57cd151d0d0c8942c1879774585b1b7504f658dd1fb784dd3ff1fb63";
+  const BREACH_MS = 3400;
 
   const gateEl = document.getElementById("screen-gate");
   const formEl = document.getElementById("gate-form");
@@ -21,6 +22,10 @@
   const errorEl = document.getElementById("gate-error");
   const shellEl = document.querySelector(".page-shell");
   const audioDock = document.getElementById("audio-dock");
+  const breachEl = document.getElementById("gate-breach");
+  const hubEl = document.getElementById("gate-breach-hub");
+
+  let unlocking = false;
 
   function normalizeToken(value) {
     return String(value || "").trim();
@@ -40,9 +45,15 @@
         .digest("SHA-256", new TextEncoder().encode(token))
         .then(hexFromBuffer);
     }
-    // Very old browsers: fall back to plaintext compare against known default only
     return Promise.resolve(
       token === "DG-VAULT-2026" ? EXPECTED_HASH : ""
+    );
+  }
+
+  function prefersReducedMotion() {
+    return (
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
   }
 
@@ -64,12 +75,13 @@
     }
   }
 
-  function unlock() {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, "1");
-    } catch (e) {
-      /* ignore quota / private mode */
+  function sfx(name) {
+    if (window.GameSounds && typeof GameSounds[name] === "function") {
+      GameSounds[name]();
     }
+  }
+
+  function finishUnlock() {
     document.body.classList.remove("vault-locked");
     document.body.classList.add("vault-unlocked");
     if (gateEl) {
@@ -78,7 +90,93 @@
     }
     if (shellEl) shellEl.hidden = false;
     if (audioDock) audioDock.hidden = false;
+    if (breachEl) {
+      breachEl.classList.remove("gate-breach--active", "gate-breach--play");
+      breachEl.setAttribute("aria-hidden", "true");
+    }
+    sfx("unlock");
     document.dispatchEvent(new CustomEvent("vault:unlocked"));
+    unlocking = false;
+  }
+
+  function playBreach() {
+    return new Promise(function (resolve) {
+      if (!breachEl || prefersReducedMotion()) {
+        resolve();
+        return;
+      }
+
+      if (gateEl) gateEl.setAttribute("aria-hidden", "true");
+      if (hubEl) {
+        hubEl.textContent = "LOCKED";
+        hubEl.removeAttribute("data-state");
+      }
+
+      breachEl.classList.remove("gate-breach--play");
+      void breachEl.offsetWidth;
+      breachEl.classList.add("gate-breach--active", "gate-breach--play");
+      breachEl.setAttribute("aria-hidden", "false");
+
+      sfx("heartbeat");
+      window.setTimeout(function () {
+        sfx("tick");
+      }, 200);
+      window.setTimeout(function () {
+        sfx("tick");
+      }, 550);
+      window.setTimeout(function () {
+        if (hubEl) {
+          hubEl.textContent = "AUTH…";
+          hubEl.setAttribute("data-state", "auth");
+        }
+        sfx("snip");
+      }, 1100);
+      window.setTimeout(function () {
+        sfx("snip");
+      }, 1650);
+      window.setTimeout(function () {
+        sfx("snip");
+      }, 1900);
+      window.setTimeout(function () {
+        sfx("snip");
+      }, 2100);
+      window.setTimeout(function () {
+        if (hubEl) {
+          hubEl.textContent = "OPEN";
+          hubEl.setAttribute("data-state", "open");
+        }
+        sfx("door");
+      }, 2350);
+      window.setTimeout(function () {
+        sfx("fanfare");
+      }, 2850);
+
+      window.setTimeout(resolve, BREACH_MS);
+    });
+  }
+
+  /**
+   * @param {{ animate?: boolean }} [opts]
+   * animate: true for first password unlock; false for session restore
+   */
+  function unlock(opts) {
+    if (unlocking) return Promise.resolve();
+    unlocking = true;
+
+    try {
+      sessionStorage.setItem(STORAGE_KEY, "1");
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
+
+    const animate = !!(opts && opts.animate) && !prefersReducedMotion();
+
+    if (!animate) {
+      finishUnlock();
+      return Promise.resolve();
+    }
+
+    return playBreach().then(finishUnlock);
   }
 
   function isUnlocked() {
@@ -99,8 +197,9 @@
     return hashToken(token).then(function (hash) {
       if (hash === EXPECTED_HASH) {
         clearError();
-        unlock();
-        return true;
+        return unlock({ animate: true }).then(function () {
+          return true;
+        });
       }
       showError("Access denied. Check the token and try again.");
       return false;
@@ -116,7 +215,7 @@
     const urlToken = params.get("token") || params.get("access");
 
     if (isUnlocked()) {
-      unlock();
+      unlock({ animate: false });
       return;
     }
 
@@ -126,7 +225,10 @@
           params.delete("token");
           params.delete("access");
           const qs = params.toString();
-          const next = window.location.pathname + (qs ? "?" + qs : "") + window.location.hash;
+          const next =
+            window.location.pathname +
+            (qs ? "?" + qs : "") +
+            window.location.hash;
           window.history.replaceState({}, "", next);
         }
       });
