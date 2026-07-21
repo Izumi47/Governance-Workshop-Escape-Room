@@ -343,11 +343,30 @@ body.vault-active .vault-progress {
   margin: 0 0 0.35rem;
 }
 
+.debrief-panel__answer {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.debrief-panel__explain {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 .debrief-panel__text {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-muted);
   line-height: 1.45;
+}
+
+.debrief-panel__continue {
+  margin-top: 0.25rem;
 }
 
 /* Score pop */

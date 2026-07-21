@@ -9,12 +9,27 @@ A browser-based escape room quiz for governance workshops. Answer timed question
 ## How it works
 
 1. Enter your name and start the mission.
-2. Read the briefing, then progress through **4 chambers** (3 questions each).
-3. Each answered question **cuts one wire** on the bomb.
-4. Answer quickly for speed bonus points.
-5. If **any question timer reaches zero**, the bomb detonates — game over.
+2. Read the briefing, then progress through **4 chambers** (10 questions each).
+3. **Each question arms its own bomb** — answer correctly to defuse it.
+4. **Wrong answers cut 5 seconds** off the timer; keep trying until correct (or time runs out).
+5. If the **timer hits zero**, that bomb detonates (0 pts for the question) and the mission continues.
+6. After every question, review the **answer and justification**, then Continue.
 
 Question types: multiple choice, fill-in-the-blank, and select-all-that-apply.
+
+---
+
+## Workshop access token
+
+The app opens behind a **password gate**. Participants need the access token.
+
+| Item | Value |
+|------|--------|
+| **Default token** | `DG-VAULT-2026` |
+| Unlock via URL | `?token=DG-VAULT-2026` |
+| Session | Stays unlocked in that browser tab (`sessionStorage`) until the tab closes |
+
+Change the token: edit the SHA-256 hash in `js/gate.js` (instructions in that file).
 
 ---
 

@@ -228,15 +228,26 @@
       if (typeBadgeEl) typeBadgeEl.hidden = true;
     },
 
-    showDebrief: function (question, type, show) {
+    showDebrief: function (question, type, show, onContinue) {
       if (!debriefPanelEl || !show) {
         if (debriefPanelEl) debriefPanelEl.hidden = true;
         return;
       }
-      const text = question.explain || GameUI.getCorrectAnswerText(question, type);
+      const answerText = GameUI.getCorrectAnswerText(question, type);
+      const explain = question.explain
+        ? '<p class="debrief-panel__explain">' + question.explain + "</p>"
+        : "";
       debriefPanelEl.innerHTML =
-        '<p class="debrief-panel__label">Debrief</p><p class="debrief-panel__text">' + text + "</p>";
+        '<p class="debrief-panel__label">Answer &amp; justification</p>' +
+        '<p class="debrief-panel__answer">' + answerText + "</p>" +
+        explain +
+        '<button type="button" class="btn btn--primary debrief-panel__continue" id="btn-debrief-continue">Continue</button>';
       debriefPanelEl.hidden = false;
+      const btn = document.getElementById("btn-debrief-continue");
+      if (btn && typeof onContinue === "function") {
+        btn.addEventListener("click", onContinue);
+        btn.focus();
+      }
     },
 
     hideDebrief: function () {

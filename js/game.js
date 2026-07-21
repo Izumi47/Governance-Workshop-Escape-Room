@@ -5,8 +5,8 @@
   const TIME_BONUS_MAX = data.timeBonusMax ?? 50;
   const RING_CIRCUMFERENCE = 97.4;
   const PRACTICE_TIME_MIN = data.practice?.timeLimitMin ?? 90;
+  const WRONG_PENALTY_SECONDS = 5;
   const params = new URLSearchParams(window.location.search);
-  const debriefForced = params.get("debrief") === "1";
   const startChamberParam = params.get("chamber");
 
   const state = {
@@ -20,7 +20,8 @@
     timeLeft: 0,
     timeLimit: 0,
     locked: false,
-    gameOver: false,
+    awaitingContinue: false,
+    resolvingQuestion: false,
     mode: "full",
     playerName: "Agent",
     lastTickSecond: -1
@@ -111,7 +112,7 @@
   }
 
   function shouldDebrief() {
-    return debriefForced || state.mode === "practice";
+    return true;
   }
 
   function isPractice() {
@@ -163,8 +164,34 @@
   }
 
   function checkCheckboxAnswer(question, selectedIndices) {
-    const sorted = selectedIndices.slice().sort(function (a, b) { return a - b; });
-    return arraysEqual(sorted, getCorrectIndices(question));
+    return gradeCheckboxAnswer(question, selectedIndices).full;
+  }
+
+  /** Partial credit: any subset of correct options (no incorrect picks) is accepted. */
+  function gradeCheckboxAnswer(question, selectedIndices) {
+    const correctSet = getCorrectIndices(question);
+    const selected = (selectedIndices || []).slice().sort(function (a, b) { return a - b; });
+    const total = correctSet.length;
+    let matched = 0;
+    let hasIncorrect = false;
+
+    selected.forEach(function (index) {
+      if (correctSet.indexOf(index) !== -1) matched += 1;
+      else hasIncorrect = true;
+    });
+
+    const accepted = !hasIncorrect && matched > 0;
+    const full = accepted && matched === total && selected.length === total;
+    const ratio = total > 0 ? matched / total : 0;
+
+    return {
+      accepted: accepted,
+      full: full,
+      matched: matched,
+      total: total,
+      ratio: ratio,
+      hasIncorrect: hasIncorrect
+    };
   }
 
   function normalizeText(value) {
@@ -278,10 +305,6 @@
     state.chamberIndex = idx;
     for (let i = 0; i < idx; i++) {
       state.completedChambers.push(i);
-      const chamber = data.chambers[i];
-      for (let q = 0; q < chamber.questions.length; q++) {
-        if (window.BombWidget) BombWidget.cut(i, q);
-      }
     }
   }
 
@@ -294,7 +317,8 @@
     state.answers = [];
     state.completedChambers = [];
     state.locked = false;
-    state.gameOver = false;
+    state.awaitingContinue = false;
+    state.resolvingQuestion = false;
     state.lastTickSecond = -1;
     data.chambers.forEach(function (ch) {
       state.chamberScores[ch.id] = 0;
@@ -328,8 +352,8 @@
 
     if (els.briefingMode) {
       els.briefingMode.textContent = isPractice()
-        ? "Practice mode: extended timers, no detonation, debrief enabled."
-        : "Full mission: timers are strict — any timeout detonates the bomb.";
+        ? "Practice mode: extended timers. Wrong answers cut 5s; timeout detonates that question only."
+        : "Full mission: each question has its own bomb. Wrong answers cut 5s. Timeout = 0 pts, then next question.";
     }
     showScreen("briefing", { dramatic: true });
   }
@@ -343,14 +367,6 @@
     }
     history.pushState({ game: true }, "");
     showChamberIntro();
-  }
-
-  function cutCurrentWire() {
-    if (window.BombWidget) BombWidget.cut(state.chamberIndex, state.questionIndex);
-    if (window.GameUI) {
-      GameUI.triggerWireSnip();
-      GameUI.flashWireCut(state.chamberIndex, state.questionIndex);
-    }
   }
 
   function showChamberIntro() {
@@ -412,6 +428,18 @@
     const question = getQuestion();
     const qType = getQuestionType(question);
     state.locked = false;
+    state.awaitingContinue = false;
+    state.resolvingQuestion = false;
+
+    if (window.BombWidget) {
+      BombWidget.reset();
+      BombWidget.setSeconds(getEffectiveTimeLimit(question));
+    }
+    if (els.explosionFlash) {
+      els.explosionFlash.hidden = true;
+      els.explosionFlash.classList.remove("explosion-flash--active");
+    }
+    document.body.classList.remove("vault-exploded");
 
     if (window.GameUI) {
       GameUI.hideDebrief();
@@ -428,7 +456,7 @@
     els.options.innerHTML = "";
 
     if (isFillQuestion(question)) {
-      els.questionHint.textContent = "Type your answer and press Enter or Submit.";
+      els.questionHint.textContent = "Type your answer and press Enter or Submit. Wrong answers cut 5 seconds.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -462,7 +490,7 @@
       startTimer(getEffectiveTimeLimit(question));
       input.focus();
     } else if (isCheckboxQuestion(question)) {
-      els.questionHint.textContent = "Select all that apply, then press Submit.";
+      els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cut 5 seconds.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -503,7 +531,7 @@
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
     } else {
-      els.questionHint.textContent = "Choose an answer (keys 1–4) before time runs out.";
+      els.questionHint.textContent = "Choose correctly (keys 1–4). Wrong answers cut 5 seconds.";
       els.questionHint.className = "hint";
       renderChoiceOptions(question);
       showScreen("question");
@@ -526,11 +554,7 @@
 
       if (state.timeLeft <= 0) {
         clearTimer();
-        if (isPractice()) {
-          handlePracticeTimeout();
-        } else {
-          triggerGameOver();
-        }
+        handleQuestionTimeout();
       }
     }, 1000);
   }
@@ -548,6 +572,7 @@
     const ratio = state.timeLimit > 0 ? state.timeLeft / state.timeLimit : 0;
     els.timerText.textContent = String(Math.max(0, state.timeLeft));
     els.timerRing.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - ratio));
+    if (window.BombWidget) BombWidget.setSeconds(state.timeLeft);
 
     els.timer.classList.remove("timer--warning", "timer--danger");
     if (state.timeLeft <= 5) {
@@ -569,6 +594,15 @@
     }
   }
 
+  function unlockQuestionInputs() {
+    state.locked = false;
+    els.options.querySelectorAll(
+      ".option:not(.option--eliminated), .fill-input, .fill-submit, .checkbox-option__input, .checkbox-submit"
+    ).forEach(function (el) {
+      el.disabled = false;
+    });
+  }
+
   function lockQuestion() {
     state.locked = true;
     els.options.querySelectorAll(
@@ -578,11 +612,15 @@
     });
   }
 
-  function calcPoints(question, correct, timeLeft) {
-    if (!correct) return { total: 0, bonus: 0 };
+  function calcPoints(question, correct, timeLeft, creditRatio) {
+    if (!correct) return { total: 0, bonus: 0, ratio: 0 };
+    const ratio = creditRatio == null ? 1 : Math.max(0, Math.min(1, creditRatio));
     const limit = state.timeLimit || question.timeLimit;
-    const bonus = Math.round((timeLeft / limit) * TIME_BONUS_MAX);
-    return { total: question.basePoints + bonus, bonus: bonus };
+    const fullBonus = Math.round((timeLeft / limit) * TIME_BONUS_MAX);
+    const fullTotal = question.basePoints + fullBonus;
+    const total = Math.round(fullTotal * ratio);
+    const bonus = Math.round(fullBonus * ratio);
+    return { total: total, bonus: bonus, ratio: ratio };
   }
 
   function getPrimaryFillAnswer(question) {
@@ -593,18 +631,27 @@
   function recordAnswer(question, response, timedOut) {
     const chamber = getChamber();
     let correct = false;
+    let partial = false;
+    let creditRatio = 1;
+    let matched = null;
+    let correctTotal = null;
 
     if (!timedOut) {
       if (isFillQuestion(question)) {
         correct = checkFillAnswer(question, response);
       } else if (isCheckboxQuestion(question)) {
-        correct = checkCheckboxAnswer(question, response);
+        const grade = gradeCheckboxAnswer(question, response);
+        correct = grade.accepted;
+        partial = grade.accepted && !grade.full;
+        creditRatio = grade.accepted ? grade.ratio : 0;
+        matched = grade.matched;
+        correctTotal = grade.total;
       } else {
         correct = response === question.correct;
       }
     }
 
-    const pts = calcPoints(question, correct, state.timeLeft);
+    const pts = calcPoints(question, correct, state.timeLeft, creditRatio);
 
     state.totalScore += pts.total;
     state.chamberScores[chamber.id] += pts.total;
@@ -613,12 +660,24 @@
       questionId: question.id,
       type: getQuestionType(question),
       correct: correct,
+      partial: partial,
+      matched: matched,
+      correctTotal: correctTotal,
       timedOut: timedOut,
       points: pts.total,
       response: response
     });
 
-    return { correct: correct, points: pts.total, bonus: pts.bonus, timedOut: timedOut };
+    return {
+      correct: correct,
+      partial: partial,
+      matched: matched,
+      correctTotal: correctTotal,
+      points: pts.total,
+      bonus: pts.bonus,
+      ratio: pts.ratio,
+      timedOut: timedOut
+    };
   }
 
   function highlightChoiceOptions(question, selectedIndex, timedOut) {
@@ -659,6 +718,15 @@
 
   function buildFeedbackMessage(question, result) {
     const qType = getQuestionType(question);
+    if (result.timedOut) {
+      return "Timed out — 0 points. Review the answer below, then Continue.";
+    }
+    if (result.correct && result.partial) {
+      return (
+        "Partial credit: " + result.matched + " of " + result.correctTotal +
+        " — +" + result.points + " pts"
+      );
+    }
     if (result.correct) {
       return result.bonus > 0
         ? "+" + result.points + " pts (" + question.basePoints + " + " + result.bonus + " speed bonus)"
@@ -668,28 +736,22 @@
       return "Incorrect — answer: " + getPrimaryFillAnswer(question);
     }
     if (qType === "checkbox") {
-      return "Incorrect — see highlighted correct options.";
+      return "Incorrect — include only correct options (partial credit if you miss some).";
     }
     return "Incorrect — answer: " + question.options[question.correct];
   }
 
-  function finishQuestion(result) {
-    const question = getQuestion();
+  function revealAndWait(question, result) {
     const qType = getQuestionType(question);
-    cutCurrentWire();
+    state.awaitingContinue = true;
+    lockQuestion();
 
-    if (result.correct) {
-      if (window.GameSounds) GameSounds.correct();
-      if (window.GameUI) {
-        GameUI.showScorePop(result.points, result.bonus);
-        if (GameUI.celebrateCorrect) GameUI.celebrateCorrect();
-      }
+    if (window.GameUI) {
+      GameUI.showDebrief(question, qType, true, function () {
+        continueAfterDebrief();
+      });
     } else {
-      if (window.GameSounds) GameSounds.wrong();
-    }
-
-    if (shouldDebrief()) {
-      window.GameUI.showDebrief(question, qType, true);
+      window.setTimeout(continueAfterDebrief, 2500);
     }
 
     els.questionHint.textContent = buildFeedbackMessage(question, result);
@@ -699,63 +761,159 @@
     } else {
       els.hudScore.textContent = String(state.totalScore);
     }
+  }
 
-    window.setTimeout(advanceQuestion, shouldDebrief() ? 2200 : 1600);
+  function continueAfterDebrief() {
+    if (!state.awaitingContinue) return;
+    state.awaitingContinue = false;
+    if (window.GameUI) GameUI.hideDebrief();
+    advanceQuestion();
+  }
+
+  function finishCorrect(question, response) {
+    if (state.resolvingQuestion || state.awaitingContinue) return;
+    state.resolvingQuestion = true;
+    clearTimer();
+    lockQuestion();
+    const result = recordAnswer(question, response, false);
+
+    if (isFillQuestion(question)) {
+      highlightFillInput(true);
+    } else if (isCheckboxQuestion(question)) {
+      highlightCheckboxOptions(question, response, false);
+    } else {
+      highlightChoiceOptions(question, response, false);
+    }
+
+    if (window.BombWidget) BombWidget.defuse();
+    if (window.GameSounds) GameSounds.correct();
+    if (window.GameUI) {
+      GameUI.triggerWireSnip();
+      GameUI.flashWireCut(state.chamberIndex, state.questionIndex);
+      GameUI.showScorePop(result.points, result.bonus);
+      if (GameUI.celebrateCorrect) GameUI.celebrateCorrect();
+    }
+
+    revealAndWait(question, result);
+  }
+
+  function applyWrongPenalty() {
+    state.timeLeft = Math.max(0, state.timeLeft - WRONG_PENALTY_SECONDS);
+    updateTimerDisplay();
+    if (state.timeLeft <= 0) {
+      clearTimer();
+      handleQuestionTimeout();
+      return true;
+    }
+    return false;
+  }
+
+  function handleWrongChoice(question, selectedIndex) {
+    const btn = els.options.querySelector('.option[data-index="' + selectedIndex + '"]');
+    if (btn) {
+      btn.classList.add("option--wrong", "option--eliminated");
+      btn.disabled = true;
+    }
+    if (window.GameSounds) GameSounds.wrong();
+    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Try again.";
+    els.questionHint.className = "hint hint--danger";
+
+    if (applyWrongPenalty()) return;
+    unlockQuestionInputs();
+  }
+
+  function handleWrongFill(question) {
+    highlightFillInput(false);
+    if (window.GameSounds) GameSounds.wrong();
+    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Try again.";
+    els.questionHint.className = "hint hint--danger";
+
+    if (applyWrongPenalty()) return;
+
+    const input = els.options.querySelector(".fill-input");
+    window.setTimeout(function () {
+      if (state.awaitingContinue || state.locked && state.timeLeft <= 0) return;
+      if (input) {
+        input.classList.remove("fill-input--wrong");
+        input.value = "";
+        input.focus();
+      }
+      unlockQuestionInputs();
+    }, 600);
+  }
+
+  function handleWrongCheckbox(question, selected) {
+    els.options.querySelectorAll(".checkbox-option").forEach(function (option, index) {
+      option.classList.remove("checkbox-option--correct", "checkbox-option--wrong", "checkbox-option--missed");
+      if (selected.indexOf(index) !== -1) {
+        option.classList.add("checkbox-option--wrong");
+      }
+    });
+    if (window.GameSounds) GameSounds.wrong();
+    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Adjust and try again.";
+    els.questionHint.className = "hint hint--danger";
+
+    if (applyWrongPenalty()) return;
+
+    window.setTimeout(function () {
+      if (state.awaitingContinue) return;
+      els.options.querySelectorAll(".checkbox-option").forEach(function (option) {
+        option.classList.remove("checkbox-option--wrong", "checkbox-option--correct");
+      });
+      unlockQuestionInputs();
+    }, 600);
+  }
+
+  function isAnswerCorrect(question, response) {
+    if (isFillQuestion(question)) return checkFillAnswer(question, response);
+    if (isCheckboxQuestion(question)) return gradeCheckboxAnswer(question, response).accepted;
+    return response === question.correct;
   }
 
   function submitChoiceAnswer(selectedIndex) {
-    if (state.locked || state.gameOver) return;
-    lockQuestion();
-    clearTimer();
+    if (state.locked || state.awaitingContinue || state.resolvingQuestion) return;
     const question = getQuestion();
-    const result = recordAnswer(question, selectedIndex, false);
-    highlightChoiceOptions(question, selectedIndex, false);
-    finishQuestion(result);
+    const btn = els.options.querySelector('.option[data-index="' + selectedIndex + '"]');
+    if (btn && btn.classList.contains("option--eliminated")) return;
+
+    if (isAnswerCorrect(question, selectedIndex)) {
+      finishCorrect(question, selectedIndex);
+      return;
+    }
+
+    state.locked = true;
+    handleWrongChoice(question, selectedIndex);
   }
 
   function submitTextAnswer(text) {
-    if (state.locked || state.gameOver) return;
+    if (state.locked || state.awaitingContinue || state.resolvingQuestion) return;
     if (!text.trim()) return;
-    lockQuestion();
-    clearTimer();
     const question = getQuestion();
-    const result = recordAnswer(question, text, false);
-    highlightFillInput(result.correct);
-    finishQuestion(result);
+
+    if (isAnswerCorrect(question, text)) {
+      finishCorrect(question, text);
+      return;
+    }
+
+    state.locked = true;
+    lockQuestion();
+    handleWrongFill(question);
   }
 
   function submitCheckboxAnswer() {
-    if (state.locked || state.gameOver) return;
+    if (state.locked || state.awaitingContinue || state.resolvingQuestion) return;
     const selected = getSelectedCheckboxIndices();
     if (selected.length === 0) return;
-    lockQuestion();
-    clearTimer();
     const question = getQuestion();
-    const result = recordAnswer(question, selected, false);
-    highlightCheckboxOptions(question, selected, false);
-    finishQuestion(result);
-  }
 
-  function handlePracticeTimeout() {
-    if (state.locked || state.gameOver) return;
+    if (isAnswerCorrect(question, selected)) {
+      finishCorrect(question, selected);
+      return;
+    }
+
     state.locked = true;
     lockQuestion();
-    const question = getQuestion();
-    recordAnswer(question, null, true);
-
-    if (isFillQuestion(question)) {
-      els.questionHint.textContent = "Time's up (practice) — no detonation.";
-    } else if (isCheckboxQuestion(question)) {
-      highlightCheckboxOptions(question, [], true);
-      els.questionHint.textContent = "Time's up (practice) — see correct options.";
-    } else {
-      highlightChoiceOptions(question, -1, true);
-      els.questionHint.textContent = "Time's up (practice) — see correct answer.";
-    }
-    els.questionHint.className = "hint hint--danger";
-    if (shouldDebrief()) GameUI.showDebrief(question, getQuestionType(question), true);
-    cutCurrentWire();
-    window.setTimeout(advanceQuestion, 2200);
+    handleWrongCheckbox(question, selected);
   }
 
   function playExplosionFlash() {
@@ -766,61 +924,34 @@
     els.explosionFlash.classList.add("explosion-flash--active");
   }
 
-  function triggerGameOver() {
-    if (state.gameOver || state.locked) return;
-    state.gameOver = true;
+  function handleQuestionTimeout() {
+    if (state.awaitingContinue || state.resolvingQuestion) return;
+    state.resolvingQuestion = true;
     lockQuestion();
 
     const question = getQuestion();
-    const qType = getQuestionType(question);
-    recordAnswer(question, null, true);
+    const result = recordAnswer(question, null, true);
 
     if (isFillQuestion(question)) {
-      els.questionHint.textContent = "Time's up — the bomb is detonating!";
+      els.questionHint.textContent = "Time's up — bomb detonated. 0 points for this question.";
     } else if (isCheckboxQuestion(question)) {
       highlightCheckboxOptions(question, [], true);
-      els.questionHint.textContent = "Time's up — the bomb is detonating!";
+      els.questionHint.textContent = "Time's up — bomb detonated. 0 points for this question.";
     } else {
       highlightChoiceOptions(question, -1, true);
-      els.questionHint.textContent = "Time's up — the bomb is detonating!";
+      els.questionHint.textContent = "Time's up — bomb detonated. 0 points for this question.";
     }
     els.questionHint.className = "hint hint--danger";
-
-    if (shouldDebrief()) GameUI.showDebrief(question, qType, true);
 
     window.setTimeout(function () {
       if (window.BombWidget) BombWidget.explode();
       if (window.GameSounds) GameSounds.boom();
       playExplosionFlash();
-    }, 500);
+    }, 200);
 
-    window.setTimeout(showGameOver, 2400);
-  }
-
-  function showGameOver() {
-    const chamber = getChamber();
-    const question = getQuestion();
-    const qType = getQuestionType(question);
-
-    els.failScore.textContent = String(state.totalScore);
-    els.failMessage.textContent = "Time ran out — the bomb detonated and the vault remains locked.";
-    els.failDetail.textContent =
-      state.playerName + " · Failed at " + chamber.name +
-      " · Question " + (state.questionIndex + 1) + " of " + chamber.questions.length;
-
-    if (els.failAnswer) {
-      els.failAnswer.hidden = false;
-      els.failAnswer.innerHTML =
-        '<p class="fail-answer__label">The answer was:</p><p class="fail-answer__text">' +
-        GameUI.getCorrectAnswerText(question, qType) + "</p>";
-    }
-
-    showScreen("fail", {
-      dramatic: true,
-      onReveal: function () {
-        if (window.GameUI) GameUI.animateScreen("fail", "anim-glitch");
-      }
-    });
+    window.setTimeout(function () {
+      revealAndWait(question, result);
+    }, 1400);
   }
 
   function returnToStart() {
@@ -937,6 +1068,9 @@
 
   function resultStatusLabel(answer) {
     if (answer.timedOut) return "Timed out";
+    if (answer.partial) {
+      return "Partial (" + answer.matched + "/" + answer.correctTotal + ")";
+    }
     return answer.correct ? "Correct" : "Incorrect";
   }
 
@@ -958,8 +1092,11 @@
 
     const summary = document.createElement("p");
     summary.className = "answer-review__summary";
-    const correctCount = state.answers.filter(function (a) { return a.correct; }).length;
-    summary.textContent = correctCount + " of " + state.answers.length + " correct";
+    const fullCorrect = state.answers.filter(function (a) { return a.correct && !a.partial; }).length;
+    const partialCorrect = state.answers.filter(function (a) { return a.partial; }).length;
+    summary.textContent = partialCorrect
+      ? fullCorrect + " full · " + partialCorrect + " partial · " + state.answers.length + " total"
+      : fullCorrect + " of " + state.answers.length + " correct";
     els.answerReview.appendChild(summary);
 
     let currentChamberId = null;
@@ -993,15 +1130,17 @@
 
       questionNumber += 1;
       const status = resultStatusLabel(answer);
-      const statusClass = answer.correct
-        ? "answer-review__item--correct"
-        : answer.timedOut
-          ? "answer-review__item--timeout"
-          : "answer-review__item--wrong";
+      const statusClass = answer.timedOut
+        ? "answer-review__item--timeout"
+        : answer.partial
+          ? "answer-review__item--partial"
+          : answer.correct
+            ? "answer-review__item--correct"
+            : "answer-review__item--wrong";
       const userAnswerClass = answer.correct
-        ? "answer-review__chip--good"
+        ? (answer.partial ? "answer-review__chip--partial" : "answer-review__chip--good")
         : "answer-review__chip--bad";
-      const correctChipClass = answer.correct
+      const correctChipClass = answer.correct && !answer.partial
         ? "answer-review__chip--good"
         : "answer-review__chip--key";
 
@@ -1079,7 +1218,7 @@
   }
 
   function onKeyDown(event) {
-    if (!screens.question.classList.contains("screen--active") || state.locked || state.gameOver) return;
+    if (!screens.question.classList.contains("screen--active") || state.locked || state.awaitingContinue || state.resolvingQuestion) return;
 
     const question = getQuestion();
     if (isFillQuestion(question) || isCheckboxQuestion(question)) {
@@ -1194,7 +1333,7 @@
   document.addEventListener("keydown", onKeyDown);
   window.addEventListener("popstate", onPopState);
 
-  if (window.BombWidget) BombWidget.init(data.chambers);
+  if (window.BombWidget) BombWidget.init();
   if (window.GameUI) GameUI.init(data.chambers);
   if (window.GameUI) {
     GameUI.syncLeaderboardVisibility();

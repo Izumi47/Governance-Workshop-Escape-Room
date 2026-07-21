@@ -1,0 +1,222 @@
+[
+  {
+    "question": "Why does the Python governance standard emphasise understandable, repeatable solutions?",
+    "answer": "So projects can later be maintained by users with limited Python experience"
+  },
+  {
+    "question": "Which Python work does this standard apply to? (Select all that apply)",
+    "answer": [
+      "Scripts for reporting, reconciliations, automation, or data preparation",
+      "Scheduled Python jobs and desktop-run Python tools",
+      "Solutions whose outputs are consumed by Finance, Power BI, or other processes"
+    ]
+  },
+  {
+    "question": "Before go-live, every Python project must have a named:",
+    "answer": "Primary owner, backup owner, and line manager"
+  },
+  {
+    "question": "Every Python project must include a dependency file such as ___.",
+    "answer": [
+      "requirements.txt",
+      "requirements",
+      "a requirements.txt"
+    ]
+  },
+  {
+    "question": "What is the rule on hard-coded user-specific paths in production Python code?",
+    "answer": "They are not allowed — use dynamic, relative, environment, or configurable paths"
+  },
+  {
+    "question": "Where must passwords, tokens, or secrets NOT be stored?",
+    "answer": "Directly in code or documentation"
+  },
+  {
+    "question": "What are the minimum environment expectations? (Select all that apply)",
+    "answer": [
+      "Python version documented",
+      "requirements.txt or equivalent available",
+      "Setup steps tested by someone other than the original developer where practical"
+    ]
+  },
+  {
+    "question": "Operational readiness requires documenting which of the following?",
+    "answer": "Triggers, schedules, runtime expectations, expected outputs, and recovery steps"
+  },
+  {
+    "question": "Documentation must be complete enough for a backup owner to answer questions such as:",
+    "answer": "How to install and run it, what Python version and libraries it needs, and how to resolve common errors"
+  },
+  {
+    "question": "A Python project is not governance-ready unless which are true? (Select all that apply)",
+    "answer": [
+      "Owner and backup owner are named",
+      "SharePoint folder is complete and approval evidence is retained",
+      "Handover has been completed"
+    ]
+  },
+  {
+    "question": "What is the goal of the Power BI governance standard?",
+    "answer": "Make every report, dataset, semantic model, and dashboard understandable without undocumented knowledge"
+  },
+  {
+    "question": "This Power BI standard applies to: (Select all that apply)",
+    "answer": [
+      "Power BI reports and dashboards",
+      "Power BI datasets or semantic models",
+      "Published content in the department workspace",
+      "Solutions with Power Automate or Power Apps dependencies"
+    ]
+  },
+  {
+    "question": "Which storage must NOT be treated as the primary governed production data dependency?",
+    "answer": "Local storage, personal OneDrive folders, and Box"
+  },
+  {
+    "question": "___ is on hold unless separately approved as a Power BI data source.",
+    "answer": [
+      "Dataverse",
+      "Microsoft Dataverse"
+    ]
+  },
+  {
+    "question": "Data model transparency requires documenting: (Select all that apply)",
+    "answer": [
+      "Source systems and source locations",
+      "Tables loaded and Power Query transformations",
+      "Calculated columns, measures, relationships, and assumptions",
+      "Row-level security design, if used"
+    ]
+  },
+  {
+    "question": "Where must Power BI content be published?",
+    "answer": "The approved department workspace"
+  },
+  {
+    "question": "What refresh information must be recorded?",
+    "answer": "Refresh ownership and contact details"
+  },
+  {
+    "question": "Support-ready documentation should make clear what to do when:",
+    "answer": "Numbers look wrong, and how common failures are recovered"
+  },
+  {
+    "question": "The SharePoint governance folder must contain or reference the latest approved:",
+    "answer": ".pbix file or reference to the managed source location"
+  },
+  {
+    "question": "A Power BI project is not governance-ready unless: (Select all that apply)",
+    "answer": [
+      "Owner and backup owner are named",
+      "Data sources, tables, transformations, and measures are documented",
+      "Publish location, refresh settings, and contacts are documented",
+      "SharePoint is complete, approvals retained, and handover completed"
+    ]
+  },
+  {
+    "question": "Before production use or formal handover, documentation must be:",
+    "answer": "Complete"
+  },
+  {
+    "question": "What must the backup owner receive before handover is complete?",
+    "answer": "A walkthrough"
+  },
+  {
+    "question": "Where practical, what should the backup owner complete independently?",
+    "answer": "A test run (Python) or review of report/refresh/model (Power BI)"
+  },
+  {
+    "question": "What must be recorded at handover? (Select all that apply)",
+    "answer": [
+      "Known issues",
+      "Manual workarounds or refresh limitations",
+      "Future improvements"
+    ]
+  },
+  {
+    "question": "Who remains responsible for keeping the project supportable after go-live?",
+    "answer": "The project owner"
+  },
+  {
+    "question": "After material changes, the owner must:",
+    "answer": "Update documentation"
+  },
+  {
+    "question": "Owner and backup owner assignments should be reviewed ___.",
+    "answer": [
+      "regularly",
+      "on a regular basis"
+    ]
+  },
+  {
+    "question": "Major incidents and fixes should be:",
+    "answer": "Recorded"
+  },
+  {
+    "question": "Ongoing governance also requires reviewing whether the solution:",
+    "answer": "Still meets the business need (and for Power BI, is still used)"
+  },
+  {
+    "question": "SharePoint should include change traceability such as: (Select all that apply)",
+    "answer": [
+      "Change history or release notes",
+      "Handover checklist",
+      "Approval evidence"
+    ]
+  },
+  {
+    "question": "Before go-live, projects need an ___ governance reference or approved intake record.",
+    "answer": [
+      "IdeAZ",
+      "ideaz"
+    ]
+  },
+  {
+    "question": "Which approvals are required before go-live?",
+    "answer": "Line manager approval and SOP or applicable process-team approval"
+  },
+  {
+    "question": "What is the official governance record for a project?",
+    "answer": "The SharePoint project folder"
+  },
+  {
+    "question": "How must the SharePoint project folder be created?",
+    "answer": "Using the department standard"
+  },
+  {
+    "question": "At minimum, the SharePoint folder must contain or reference: (Select all that apply)",
+    "answer": [
+      "Completed documentation template",
+      "Latest approved source artefacts (code or .pbix / managed location)",
+      "Approval evidence and handover checklist",
+      "Change history or release notes"
+    ]
+  },
+  {
+    "question": "For Python projects, source code must be:",
+    "answer": "Available in SharePoint or an approved repository with SharePoint reference"
+  },
+  {
+    "question": "Before handover, the project owner must confirm that:",
+    "answer": "Source artefacts are in SharePoint or properly referenced (and for Power BI, major measures, transformations, and security are documented)"
+  },
+  {
+    "question": "Approval evidence must be:",
+    "answer": "Retained"
+  },
+  {
+    "question": "A completed ___ checklist is required before go-live.",
+    "answer": [
+      "handover",
+      "handover checklist"
+    ]
+  },
+  {
+    "question": "Which roles must be named on every governed project? (Select all that apply)",
+    "answer": [
+      "Primary owner",
+      "Backup owner",
+      "Line manager"
+    ]
+  }
+]
