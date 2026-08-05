@@ -343,140 +343,147 @@ window.GAME_DATA = {
       questions: [
         {
           id: "alm-1",
-          text: "Before production use or formal handover, documentation must be:",
+          text: "What is the purpose of ALM governance for Power Platform solutions?",
           options: [
-            "Optional if the author is available",
-            "Complete",
-            "Stored only in private chat",
-            "Replaced by a verbal summary"
+            "Ensure solutions are secure, compliant, scalable, and ready for deployment",
+            "Allow solutions to move directly from an idea to production without review",
+            "Replace security roles with one shared account",
+            "Limit governance to the day the solution is deployed"
           ],
-          correct: 1,
+          correct: 0,
           timeLimit: 30,
           basePoints: 100,
-          explain: "Before production use or formal handover, documentation must be complete."
+          explain: "ALM governance helps ensure Power Platform solutions are secure, compliant, scalable, and ready for deployment."
         },
         {
           id: "alm-2",
-          text: "What must the backup owner receive before handover is complete?",
+          text: "Which sequence is the standard ALM environment pathway?",
           options: [
-            "A walkthrough",
-            "Only a zip of undocumented files",
-            "Nothing if the primary owner stays forever",
-            "Access to delete approval evidence"
+            "DEV > UAT > PROD",
+            "PROD > UAT > DEV",
+            "DEV > PROD > UAT",
+            "One shared environment only"
           ],
           correct: 0,
           timeLimit: 30,
           basePoints: 100,
-          explain: "The backup owner must receive a walkthrough."
+          explain: "The deck defines the standard pathway as DEV for development, UAT for testing, then PROD for full deployment."
         },
         {
           id: "alm-3",
-          text: "Where practical, what should the backup owner complete independently?",
+          text: "Which statement best matches the deck's database-selection guidance?",
           options: [
-            "A test run (Python) or review of report/refresh/model (Power BI)",
-            "Deletion of the SharePoint folder",
-            "Removal of the primary owner from records",
-            "Publishing straight to an unapproved workspace"
+            "Choose between SharePoint List and Dataverse based on users, data volume, and external-data needs",
+            "Always use Dataverse regardless of data size or user count",
+            "Always use local files for transactional data",
+            "Choose the database only after production deployment"
           ],
           correct: 0,
           timeLimit: 30,
           basePoints: 100,
-          explain: "Backup owners should independently test-run Python solutions or review Power BI report/refresh/model where practical."
+          explain: "The deck frames database selection around user count, data volume, and whether the solution uses external data, with SharePoint List and Dataverse as the main choices."
         },
         {
           id: "alm-4",
-          type: "checkbox",
-          text: "What must be recorded at handover? (Select all that apply)",
+          text: "Which platform is used for the new idea, environment-access, and solution-review requests described in the deck?",
           options: [
-            "Known issues",
-            "Manual workarounds or refresh limitations",
-            "Future improvements",
-            "Nothing — issues can stay undocumented"
+            "LCNC C4E Empower Suite",
+            "An unauthorised My Workspace",
+            "A personal OneDrive folder",
+            "A private chat with no recorded request"
           ],
-          correct: [0, 1, 2],
+          correct: 0,
           timeLimit: 30,
           basePoints: 100,
-          explain: "Known issues, workarounds/limitations, and future improvements must be recorded."
+          explain: "The deck routes new idea, environment access, and solution review requests through the LCNC C4E Empower Suite."
         },
         {
           id: "alm-5",
-          text: "Who remains responsible for keeping the project supportable after go-live?",
+          type: "checkbox",
+          text: "What information is requested when gaining access to an ALM environment? (Select all that apply)",
           options: [
-            "The project owner",
-            "Nobody — governance ends at publish",
-            "Only the IdeAZ intake bot",
-            "Any random workspace visitor"
+            "Business case",
+            "Criticality",
+            "Power Platform component",
+            "Additional contacts",
+            "An unapproved personal workspace name"
           ],
-          correct: 0,
+          correct: [0, 1, 2, 3],
           timeLimit: 30,
           basePoints: 100,
-          explain: "The project owner remains responsible for keeping the solution supportable."
+          explain: "The environment access form asks for the business case, criticality, Power Platform component, and additional contacts."
         },
         {
           id: "alm-6",
-          text: "After material changes, the owner must:",
-          options: [
-            "Update documentation",
-            "Leave documentation outdated to save time",
-            "Hide changes from the backup owner",
-            "Skip SharePoint updates forever"
-          ],
-          correct: 0,
-          timeLimit: 30,
-          basePoints: 100,
-          explain: "Update documentation after material changes (Python or Power BI measures, sources, refresh, or security)."
-        },
-        {
-          id: "alm-7",
-          type: "fill",
-          text: "Owner and backup owner assignments should be reviewed ___.",
-          answers: ["regularly", "on a regular basis"],
-          timeLimit: 30,
-          basePoints: 100,
-          explain: "Review owner and backup owner assignments regularly."
-        },
-        {
-          id: "alm-8",
-          text: "Major incidents and fixes should be:",
-          options: [
-            "Recorded",
-            "Kept only in memory",
-            "Deleted from SharePoint",
-            "Ignored if the report still opens"
-          ],
-          correct: 0,
-          timeLimit: 30,
-          basePoints: 100,
-          explain: "Record major incidents/issues and fixes."
-        },
-        {
-          id: "alm-9",
-          text: "Ongoing governance also requires reviewing whether the solution:",
-          options: [
-            "Still meets the business need (and for Power BI, is still used)",
-            "Can permanently rely on personal OneDrive",
-            "Can drop its backup owner",
-            "No longer needs a SharePoint record"
-          ],
-          correct: 0,
-          timeLimit: 30,
-          basePoints: 100,
-          explain: "Review whether the solution still meets the business need — and for Power BI, whether the report is still used."
-        },
-        {
-          id: "alm-10",
           type: "checkbox",
-          text: "SharePoint should include change traceability such as: (Select all that apply)",
+          text: "For Dataverse tables, what does the deck say must be configured? (Select all that apply)",
           options: [
-            "Change history or release notes",
-            "Handover checklist",
-            "Approval evidence",
-            "Only an empty folder name"
+            "Appropriate security roles",
+            "Privileges, access level, and role depth",
+            "Users or teams assigned through Active Directory",
+            "One global role that gives every user organisation-wide access"
           ],
           correct: [0, 1, 2],
           timeLimit: 30,
           basePoints: 100,
-          explain: "SharePoint must contain or reference approval evidence, handover checklist, and change history or release notes."
+          explain: "Dataverse governance requires appropriate table security roles, configured privileges/access levels/role depth, and controlled assignment to users or teams."
+        },
+        {
+          id: "alm-7",
+          text: "For external data, when does the deck say a Transfer Impact Assessment (TIA) applies?",
+          options: [
+            "When EU/UK personal data is shared with a third party outside AstraZeneca",
+            "For every SharePoint List regardless of its data",
+            "Only after a solution is already in production",
+            "Only when no data leaves the Office 365 environment"
+          ],
+          correct: 0,
+          timeLimit: 30,
+          basePoints: 100,
+          explain: "The deck marks TIA as applicable to external data when EU/UK personal data is shared with a third party outside AstraZeneca."
+        },
+        {
+          id: "alm-8",
+          text: "Which sequence matches the deck's route for preparing a solution for production review?",
+          options: [
+            "Package the project into a Power Apps solution, then raise a Solution Review request to Production in Empower Suite",
+            "Publish directly from a personal environment and request review afterwards",
+            "Skip compliance details and submit only after deployment",
+            "Keep the project outside Power Apps Solutions until production"
+          ],
+          correct: 0,
+          timeLimit: 30,
+          basePoints: 100,
+          explain: "The deck instructs teams to package projects into a solution and then raise a Solution Review request to Production through the LCNC C4E Empower Suite."
+        },
+        {
+          id: "alm-9",
+          type: "checkbox",
+          text: "What does ongoing governance require after deployment? (Select all that apply)",
+          options: [
+            "Request analytics usage reports and monitor app, flow, or agent usage",
+            "Raise minor enhancements or bug fixes as needed",
+            "Follow up with the project owner for major upgrades",
+            "Treat deployment as the end of governance"
+          ],
+          correct: [0, 1, 2],
+          timeLimit: 30,
+          basePoints: 100,
+          explain: "Deployment is not the end: teams should monitor usage, raise minor enhancements or bug fixes, and involve the project owner for major upgrades."
+        },
+        {
+          id: "alm-10",
+          text: "Power Automate flows must also follow:",
+          options: [
+            "Structured ALM and ownership rules",
+            "Only ad-hoc personal ownership",
+            "No deployment or monitoring process",
+            "Power BI-only governance requirements"
+          ],
+          correct: 0,
+          timeLimit: 30,
+          basePoints: 100,
+          explain: "The deck states that Power Automate flows must follow structured ALM and ownership rules too."
         }
       ]
     },
