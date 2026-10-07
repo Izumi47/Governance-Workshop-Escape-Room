@@ -698,6 +698,13 @@ body.vault-active .vault-progress {
   font-weight: 400;
 }
 
+.briefing-role p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .briefing-role ul {
   margin: 0;
   padding-left: 1.1rem;

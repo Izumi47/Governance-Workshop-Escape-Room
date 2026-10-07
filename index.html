@@ -167,36 +167,21 @@
           </div>
         </div>
         <div class="hero__content">
-          <p class="eyebrow">Keep Talking — Governance Edition</p>
+          <p class="eyebrow">Solve it or BOOM! – Governance Edition</p>
           <h1 class="title title--hero">The Data Governance Vault</h1>
           <p class="subtitle">
-            One Defuser. Four Experts. One bomb. Talk fast — or it detonates.
+            One Scout. One Defuser. One Bomb. May the best bomb specialist survive.
           </p>
 
-          <div class="start-roles" aria-hidden="true">
-            <div class="start-roles__item start-roles__item--defuser">
-              <span class="start-roles__tag">×1</span>
-              <span class="start-roles__title">Defuser</span>
-              <span class="start-roles__desc">Sees the bomb &amp; questions</span>
-            </div>
-            <div class="start-roles__item">
-              <span class="start-roles__tag">×4</span>
-              <span class="start-roles__title">Experts</span>
-              <span class="start-roles__desc">Hold the manuals only</span>
-            </div>
-          </div>
-
           <label class="name-field" for="player-name">
-            <span class="name-field__label">Group name <span class="name-field__required" aria-hidden="true">*</span></span>
+            <span class="name-field__label">Specialist name <span class="name-field__required" aria-hidden="true">*</span></span>
             <input id="player-name" class="name-field__input" type="text" maxlength="32" placeholder="e.g. Vault Breakers" autocomplete="organization" required aria-required="true">
-            <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your group name to begin.</span>
+            <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
           </label>
 
           <div class="start-actions">
             <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Arm the Bomb</button>
           </div>
-
-          <p class="start-seat-note">Defuser sits opposite the Experts. Experts: no peeking at the screen.</p>
 
           <div id="start-leaderboard" class="leaderboard leaderboard--start" aria-label="Top scores" hidden></div>
         </div>
@@ -208,34 +193,24 @@
       <div class="screen__inner screen__inner--vault screen__inner--briefing">
         <div class="vault-door-strip" aria-hidden="true"></div>
         <p class="eyebrow">Mission Briefing</p>
-        <h2 class="title title--md">Keep Talking and Nobody Explodes</h2>
+        <h2 class="title title--md">Solve it or BOOM!</h2>
         <p class="briefing-lead">
-          This is a <strong>5-person cooperative</strong> defusal. Only the Defuser may look at this device.
-          Everyone else works from paper manuals — just like the classic bomb game.
+          This is a <strong>solo recon</strong>. You need to defuse the bomb on your own before time runs out.
+          You may use paper manuals like a classic bomb game.
         </p>
 
         <div class="briefing-roles">
           <article class="briefing-role briefing-role--defuser">
-            <h3 class="briefing-role__title">Defuser <span>(1)</span></h3>
-            <ul>
-              <li>Sits <strong>opposite</strong> the Experts</li>
-              <li>Only person who can see the screen / bomb</li>
-              <li>Reads questions aloud and describes what you see</li>
-              <li>Enters answers the Experts tell you</li>
-            </ul>
+            <h3 class="briefing-role__title">Scout</h3>
+            <p>Scout the questions, understand what is being asked relative to what was shared before.</p>
           </article>
           <article class="briefing-role">
-            <h3 class="briefing-role__title">Experts <span>(4)</span></h3>
-            <ul>
-              <li><strong>Must not</strong> look at the Defuser’s screen</li>
-              <li>Each holds one governance manual</li>
-              <li>Listen carefully and look up the rule</li>
-              <li>Tell the Defuser what to select — clearly and fast</li>
-            </ul>
+            <h3 class="briefing-role__title">Defuse</h3>
+            <p>Answer the questions as quickly as you can to defuse the bomb. Remember, the wrong answer will cut your time and allow the bomb to tick faster.</p>
           </article>
         </div>
 
-        <h3 class="briefing-manuals-title">Expert manuals</h3>
+        <h3 class="briefing-manuals-title">Manuals</h3>
         <ul class="briefing-manuals">
           <li><span class="briefing-manuals__swatch" style="--swatch:#3dd68c"></span> <strong>Python</strong> — Python governance standard</li>
           <li><span class="briefing-manuals__swatch" style="--swatch:#59c2ff"></span> <strong>Power BI</strong> — Power BI governance standard</li>
@@ -245,10 +220,10 @@
 
         <ul class="briefing-list">
           <li><strong>40 armed modules</strong> — mixed across the four manuals. Progress dots show which manuals you’ve cleared.</li>
-          <li><strong>Wrong answer</strong> cuts the timer by <strong>5 seconds</strong>. Keep talking until it’s right.</li>
+          <li><strong>Wrong answer</strong> cuts the timer by <strong>5 seconds</strong>. </li>
           <li><strong>Timer hits zero</strong> → that module detonates (0 pts) → next module. The mission continues.</li>
           <li><strong>After each module</strong> — short answer reveal for the room, then Continue (or auto after 10s).</li>
-          <li>Defuser tips: keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
+          <li>Tips: keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
         </ul>
         <p id="briefing-mode" class="briefing-mode"></p>
         <button id="btn-briefing-go" class="btn btn--primary" type="button">Start Defusal</button>

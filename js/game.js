@@ -27,7 +27,7 @@
     reviewTimerId: null,
     reviewTimeLeft: 0,
     mode: "full",
-    playerName: "Group",
+    playerName: "Specialist",
     lastTickSecond: -1
   };
 
@@ -424,8 +424,8 @@
 
     if (els.briefingMode) {
       els.briefingMode.textContent = isPractice()
-        ? "Practice mode: extended timers. Experts still work from manuals — Defuser only on screen."
-        : "Live defusal: Defuser on this device. Experts: manuals only — no screen peeking.";
+        ? "Practice mode: extended timers. Paper manuals allowed."
+        : "Live defusal: solo run. Paper manuals allowed.";
     }
     showScreen("briefing", { dramatic: true });
   }
@@ -1331,7 +1331,7 @@
     els.resultsTitle.textContent = tier.title;
     els.resultsScore.textContent = String(state.totalScore);
     els.resultsMessage.textContent = tier.message;
-    els.resultsPlayer.textContent = "Group: " + state.playerName + (isPractice() ? " · Practice Run" : "");
+    els.resultsPlayer.textContent = "Specialist: " + state.playerName + (isPractice() ? " · Practice Run" : "");
 
     if (els.tierBadge) {
       els.tierBadge.textContent = tier.eyebrow;
