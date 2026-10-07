@@ -45,9 +45,9 @@ sessionStorage.removeItem("vault-access-ok"); location.reload();
 | Audience | URL |
 |----------|-----|
 | **Participants** | `https://governance-workshop-escape-room.vercel.app` |
-| **Facilitator** (local leaderboard) | `https://governance-workshop-escape-room.vercel.app/?facilitator=1` |
+| **Admin** (live scores) | `https://governance-workshop-escape-room.vercel.app/admin.html` |
 
-Debrief (answer + justification) always shows after each question. The leaderboard is **hidden from participants** by default. Facilitator mode shows a top-10 board stored in that browser only (not a shared room ranking unless you add a backend).
+Debrief (answer + justification) always shows after each question. Participants never see other teams' scores. The **admin page** shows every team's live score, progress and status, refreshing every 3 seconds. It asks for the admin token (the `ADMIN_TOKEN` env var, separate from the workshop token). Practice runs are not reported. **Reset board** clears all teams; scores also expire 24h after the last update.
 
 ---
 
@@ -69,14 +69,7 @@ python -m http.server 8080
 
 ## Customize content
 
-Edit **`js/questions.js`** — chambers, questions, timers, tiers, and leaderboard settings live in `window.GAME_DATA`.
-
-```javascript
-leaderboard: {
-  showToUsers: false,   // true = show leaderboard to all players
-  facilitatorParam: "facilitator"
-}
-```
+Edit **`js/questions.js`** — chambers, questions, timers and tiers live in `window.GAME_DATA`.
 
 Replace placeholder ALM/SOP questions with your org-specific governance content. Add optional `explain` fields for debrief/discussion text.
 
@@ -86,12 +79,15 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 
 ```
 ├── index.html              # App shell, gate, breach overlay
+├── admin.html              # Live scores for facilitators
+├── api/score.js            # Vercel function: live scores in Upstash Redis
+├── tests/score-api.check.js # node tests/score-api.check.js
 ├── js/
 │   ├── vault3d.js          # Three.js background, timer bomb + breach/shutter/confetti/explosion
 │   ├── sounds.js           # Web Audio SFX + BGM
 │   ├── gate.js             # Access token + breach unlock
 │   ├── questions.js        # Game content (edit this)
-│   ├── ui.js               # Progress map, effects, leaderboard
+│   ├── ui.js               # Progress map, effects
 │   ├── bomb.js             # Timer bomb state (SVG fallback)
 │   └── game.js             # Logic, timers, scoring
 ├── css/
@@ -108,7 +104,7 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 
 ## Deploy to Vercel
 
-This is a **static site** (no `package.json`, no build).
+A **static site** (no `package.json`, no build) plus one serverless function, `api/score.js`, for live scores.
 
 | Setting | Value |
 |---------|--------|
@@ -117,9 +113,15 @@ This is a **static site** (no `package.json`, no build).
 | Build Command | *(empty)* |
 | Output Directory | `.` |
 
-Connect the GitHub repo and deploy. Enable **Speed Insights** in the Vercel dashboard for performance metrics (scripts already in `index.html`).
+Connect the GitHub repo and deploy. For the admin live board:
 
-See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, Speed Insights, gitignore rules, and facilitator/leaderboard details.
+1. Vercel project → **Storage** → add **Upstash Redis** (free tier). It sets the `KV_REST_API_URL` / `KV_REST_API_TOKEN` env vars.
+2. **Settings → Environment Variables** → add `ADMIN_TOKEN` with your admin token.
+3. Redeploy.
+
+Locally, `/api/score` only runs under `vercel dev`. With a plain static server the game still works and score reports fail silently. Enable **Speed Insights** in the Vercel dashboard for performance metrics (scripts already in `index.html`).
+
+See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, Speed Insights, gitignore rules, and admin board details.
 
 ---
 
@@ -127,7 +129,8 @@ See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, Speed 
 
 - HTML, CSS, JavaScript (no framework)
 - Web Audio API for sound effects
-- `localStorage` for sound preference and optional facilitator leaderboard
+- `localStorage` for sound preference
+- Vercel function + Upstash Redis for the admin live board
 
 ---
 

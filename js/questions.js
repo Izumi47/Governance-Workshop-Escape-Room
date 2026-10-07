@@ -17,13 +17,6 @@ window.GAME_DATA = {
   // Shuffle multiple-choice / checkbox option order (remaps correct indices).
   shuffleOptions: true,
 
-  // Leaderboard: hidden from players by default. Facilitators use ?facilitator=1
-  // Set showToUsers: true when you want everyone to see it again.
-  leaderboard: {
-    showToUsers: false,
-    facilitatorParam: "facilitator"
-  },
-
   practice: {
     timeLimitMin: 90
   },

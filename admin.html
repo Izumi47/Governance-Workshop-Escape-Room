@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Vault Admin · Live Scores</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Same tokens as css/styles.css; that sheet locks page scroll, so it isn't loaded here. */
+    :root {
+      --bg-deep: #14161c;
+      --bg-panel: #1c1f27;
+      --border: #3d4450;
+      --text: #ebe8e1;
+      --text-muted: #9a968c;
+      --accent: #c9921a;
+      --success: #3dd68c;
+      --danger: #e05a62;
+      --font-display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+      --font-body: "IBM Plex Sans", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --radius: 6px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      padding: 1.5rem 1rem 3rem;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+    main { max-width: 960px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1rem; margin-bottom: 1rem; }
+    h1 { font-family: var(--font-display); font-size: 2.4rem; letter-spacing: 0.04em; margin: 0; color: var(--accent); }
+    .meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); flex: 1; }
+    .meta--error { color: var(--danger); }
+    button, input {
+      font: inherit;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.9rem;
+      background: var(--bg-panel);
+      color: var(--text);
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    .btn-danger:hover { border-color: var(--danger); color: var(--danger); }
+    form { display: flex; gap: 0.5rem; max-width: 420px; margin: 3rem auto; }
+    form input { flex: 1; min-width: 0; }
+    table { width: 100%; border-collapse: collapse; background: var(--bg-panel); border-radius: var(--radius); overflow: hidden; }
+    th, td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    td.num { font-family: var(--font-mono); }
+    .rank { color: var(--text-muted); width: 3rem; }
+    .score { font-weight: 700; color: var(--accent); font-size: 1.15rem; }
+    .group { font-weight: 600; overflow-wrap: anywhere; }
+    .bar { height: 6px; background: var(--border); border-radius: 3px; min-width: 80px; margin-top: 0.3rem; }
+    .bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+    .status { font-family: var(--font-mono); font-size: 0.75rem; }
+    .status--playing { color: var(--accent); }
+    .status--finished { color: var(--success); }
+    .status--idle { color: var(--text-muted); }
+    .empty { text-align: center; color: var(--text-muted); padding: 2rem; }
+    @media (max-width: 600px) {
+      .col-seen { display: none; }
+      th, td { padding: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Live Scores</h1>
+      <span class="meta" id="meta" aria-live="polite"></span>
+      <button type="button" class="btn-danger" id="btn-reset" hidden>Reset board</button>
+    </header>
+
+    <form id="login" hidden>
+      <input type="password" id="token" placeholder="Admin token" aria-label="Admin token" autocomplete="current-password" required>
+      <button type="submit">Open</button>
+    </form>
+
+    <table id="board" hidden>
+      <thead>
+        <tr><th>#</th><th>Group</th><th>Score</th><th>Progress</th><th>Status</th><th class="col-seen">Updated</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const POLL_MS = 3000;
+      const IDLE_MS = 2 * 60 * 1000;
+      const TOKEN_KEY = "vault-admin-token";
+
+      const els = {
+        meta: document.getElementById("meta"),
+        reset: document.getElementById("btn-reset"),
+        login: document.getElementById("login"),
+        token: document.getElementById("token"),
+        board: document.getElementById("board"),
+        rows: document.getElementById("rows")
+      };
+      let pollId = null;
+      let token = "";
+      try { token = sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_e) {}
+
+      function getToken() {
+        return token;
+      }
+
+      function setToken(value) {
+        token = value;
+        try {
+          if (value) sessionStorage.setItem(TOKEN_KEY, value);
+          else sessionStorage.removeItem(TOKEN_KEY);
+        } catch (_e) {}
+      }
+
+      function setMeta(text, isError) {
+        els.meta.textContent = text;
+        els.meta.classList.toggle("meta--error", Boolean(isError));
+      }
+
+      function api(method) {
+        return fetch("/api/score", { method: method, headers: { "x-admin-token": getToken() }, cache: "no-store" })
+          .then(function (res) {
+            if (res.status === 401) {
+              showLogin("Wrong admin token.");
+              throw null;
+            }
+            if (!res.ok) {
+              return res.json().catch(function () { return {}; }).then(function (body) {
+                throw new Error(body.error || "HTTP " + res.status);
+              });
+            }
+            return res.status === 204 ? null : res.json();
+          });
+      }
+
+      function ago(ms) {
+        const s = Math.max(0, Math.round(ms / 1000));
+        if (s < 60) return s + "s ago";
+        if (s < 3600) return Math.floor(s / 60) + "m ago";
+        return Math.floor(s / 3600) + "h ago";
+      }
+
+      function cell(row, text, className) {
+        const td = document.createElement("td");
+        if (className) td.className = className;
+        td.textContent = text;
+        row.appendChild(td);
+        return td;
+      }
+
+      function render(teams) {
+        teams.sort(function (a, b) { return b.score - a.score || a.updated - b.updated; });
+        els.rows.innerHTML = "";
+
+        if (!teams.length) {
+          const tr = document.createElement("tr");
+          const td = cell(tr, "No teams yet — scores appear once a group starts its mission.", "empty");
+          td.colSpan = 6;
+          els.rows.appendChild(tr);
+        }
+
+        const now = Date.now();
+        teams.forEach(function (t, i) {
+          const tr = document.createElement("tr");
+          cell(tr, "#" + (i + 1), "num rank");
+          cell(tr, t.group, "group");
+          cell(tr, String(t.score), "num score");
+
+          const progress = cell(tr, t.answered + " / " + t.total, "num");
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          const fill = document.createElement("span");
+          fill.style.width = (t.total ? Math.min(100, (t.answered / t.total) * 100) : 0) + "%";
+          bar.appendChild(fill);
+          progress.appendChild(bar);
+
+          const idle = t.status === "playing" && now - t.updated > IDLE_MS;
+          const status = idle ? "idle" : t.status;
+          cell(tr, status, "status status--" + status);
+          cell(tr, ago(now - t.updated), "num col-seen");
+          els.rows.appendChild(tr);
+        });
+
+        const playing = teams.filter(function (t) { return t.status === "playing"; }).length;
+        setMeta(teams.length + " teams · " + playing + " playing · updated " + new Date().toLocaleTimeString());
+      }
+
+      function poll() {
+        api("GET")
+          .then(function (data) { render(data.teams || []); })
+          .catch(function (err) { if (err) setMeta("Couldn't refresh: " + err.message, true); });
+      }
+
+      function showLogin(message) {
+        clearInterval(pollId);
+        pollId = null;
+        setToken("");
+        els.board.hidden = true;
+        els.reset.hidden = true;
+        els.login.hidden = false;
+        setMeta(message || "Enter the admin token to view live scores.", Boolean(message));
+        els.token.focus();
+      }
+
+      function showBoard() {
+        els.login.hidden = true;
+        els.board.hidden = false;
+        els.reset.hidden = false;
+        poll();
+        clearInterval(pollId);
+        pollId = setInterval(poll, POLL_MS);
+      }
+
+      els.login.addEventListener("submit", function (event) {
+        event.preventDefault();
+        setToken(els.token.value.trim());
+        els.token.value = "";
+        showBoard();
+      });
+
+      els.reset.addEventListener("click", function () {
+        if (!confirm("Clear every team's score from the live board?")) return;
+        api("DELETE")
+          .then(poll)
+          .catch(function (err) { if (err) setMeta("Reset failed: " + err.message, true); });
+      });
+
+      if (getToken()) showBoard();
+      else showLogin();
+    })();
+  </script>
+</body>
+</html>

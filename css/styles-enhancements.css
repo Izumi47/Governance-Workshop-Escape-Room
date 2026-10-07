@@ -31,7 +31,7 @@ body[data-chamber] .stamp-mark:not(img) {
   color: var(--chamber-accent);
 }
 
-body.mode-practice:not(.mode-facilitator)::after {
+body.mode-practice::after {
   content: "PRACTICE MODE";
   position: fixed;
   top: 0.5rem;
@@ -47,41 +47,6 @@ body.mode-practice:not(.mode-facilitator)::after {
   border-radius: 4px;
   z-index: 50;
   pointer-events: none;
-}
-
-body.mode-facilitator::after {
-  content: "FACILITATOR · LOCAL SCORES";
-  position: fixed;
-  top: 0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  color: var(--chamber-powerbi);
-  background: rgba(89, 194, 255, 0.12);
-  border: 1px solid rgba(89, 194, 255, 0.35);
-  padding: 0.25rem 0.65rem;
-  border-radius: 4px;
-  z-index: 50;
-  pointer-events: none;
-}
-
-body.mode-facilitator.mode-practice::after {
-  content: "FACILITATOR · PRACTICE";
-}
-
-.leaderboard[hidden] {
-  display: none !important;
-}
-
-.leaderboard--facilitator-note {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  text-align: center;
-  margin: 0 0 0.75rem;
 }
 
 /* Audio dock — mute + hover-reveal volume sliders (top left) */
@@ -965,55 +930,6 @@ kbd {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text);
-}
-
-/* Leaderboard */
-.leaderboard {
-  margin: 1rem 0 1.5rem;
-  text-align: left;
-}
-
-.leaderboard--start {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.leaderboard__empty {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-align: center;
-  margin: 0;
-}
-
-.leaderboard__row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.85rem;
-}
-
-.leaderboard__row--you {
-  background: rgba(240, 160, 48, 0.08);
-  border-radius: var(--radius);
-}
-
-.leaderboard__rank {
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  width: 2rem;
-}
-
-.leaderboard__name {
-  flex: 1;
-}
-
-.leaderboard__score {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--accent);
 }
 
 /* Reduced motion */

@@ -1,5 +1,5 @@
 /**
- * UI helpers: progress map, theming, animations, leaderboard, debrief.
+ * UI helpers: progress map, theming, animations, debrief.
  */
 (function () {
   "use strict";
@@ -18,27 +18,8 @@
   let snipOverlay = null;
   let reducedMotion = false;
   let scoreAnimFrame = null;
-  let startLeaderboardEl = null;
-  let resultsLeaderboardEl = null;
   let sealedChambers = {};
   let bloomTimer = null;
-
-  function getLeaderboardConfig() {
-    return window.GAME_DATA && window.GAME_DATA.leaderboard
-      ? window.GAME_DATA.leaderboard
-      : { showToUsers: false, facilitatorParam: "facilitator" };
-  }
-
-  function isFacilitatorMode() {
-    const cfg = getLeaderboardConfig();
-    const param = cfg.facilitatorParam || "facilitator";
-    return new URLSearchParams(window.location.search).get(param) === "1";
-  }
-
-  function shouldShowLeaderboard() {
-    const cfg = getLeaderboardConfig();
-    return cfg.showToUsers === true || isFacilitatorMode();
-  }
 
   function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -91,11 +72,7 @@
       debriefPanelEl = document.getElementById("debrief-panel");
       scorePopContainer = document.getElementById("score-pop-container");
       snipOverlay = document.getElementById("snip-overlay");
-      startLeaderboardEl = document.getElementById("start-leaderboard");
-      resultsLeaderboardEl = document.getElementById("results-leaderboard");
       sealedChambers = {};
-
-      this.syncLeaderboardVisibility();
 
       this.buildProgressMap();
     },
@@ -464,75 +441,6 @@
     resetSpectacleState: function () {
       sealedChambers = {};
       document.body.classList.remove("vault-correct-bloom");
-    },
-
-    saveScore: function (name, score, tier) {
-      if (!shouldShowLeaderboard()) return [];
-      const key = "vault-leaderboard";
-      let board = [];
-      try {
-        board = JSON.parse(localStorage.getItem(key) || "[]");
-      } catch (_e) {
-        board = [];
-      }
-      board.push({
-        name: name,
-        score: score,
-        tier: tier,
-        date: new Date().toISOString()
-      });
-      board.sort(function (a, b) { return b.score - a.score; });
-      board = board.slice(0, 10);
-      localStorage.setItem(key, JSON.stringify(board));
-      return board;
-    },
-
-    renderLeaderboard: function (container, highlightName) {
-      if (!container) return;
-      let board = [];
-      try {
-        board = JSON.parse(localStorage.getItem("vault-leaderboard") || "[]");
-      } catch (_e) {
-        board = [];
-      }
-
-      if (board.length === 0) {
-        container.innerHTML = '<p class="leaderboard__empty">No scores yet — be the first!</p>';
-        return;
-      }
-
-      container.innerHTML = "";
-      board.forEach(function (entry, i) {
-        const row = document.createElement("div");
-        row.className = "leaderboard__row";
-        if (entry.name === highlightName) row.classList.add("leaderboard__row--you");
-        row.innerHTML =
-          '<span class="leaderboard__rank">#' + (i + 1) + "</span>" +
-          '<span class="leaderboard__name">' + entry.name + "</span>" +
-          '<span class="leaderboard__score">' + entry.score + "</span>";
-        container.appendChild(row);
-      });
-    },
-
-    syncLeaderboardVisibility: function () {
-      const show = shouldShowLeaderboard();
-      document.body.classList.toggle("leaderboard-visible", show);
-      document.body.classList.toggle("mode-facilitator", isFacilitatorMode());
-      if (startLeaderboardEl) startLeaderboardEl.hidden = !show;
-      if (resultsLeaderboardEl) resultsLeaderboardEl.hidden = !show;
-    },
-
-    renderLeaderboardIfVisible: function (container, highlightName) {
-      if (!shouldShowLeaderboard()) return;
-      this.renderLeaderboard(container, highlightName);
-    },
-
-    shouldShowLeaderboard: function () {
-      return shouldShowLeaderboard();
-    },
-
-    isFacilitatorMode: function () {
-      return isFacilitatorMode();
     },
 
     toggleBombCollapsed: function () {

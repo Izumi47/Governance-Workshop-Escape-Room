@@ -83,8 +83,6 @@
     tierBadge: document.getElementById("tier-badge"),
     breakdown: document.getElementById("breakdown"),
     answerReview: document.getElementById("answer-review"),
-    resultsLeaderboard: document.getElementById("results-leaderboard"),
-    startLeaderboard: document.getElementById("start-leaderboard"),
     failScore: document.getElementById("fail-score"),
     failMessage: document.getElementById("fail-message"),
     failDetail: document.getElementById("fail-detail"),
@@ -383,6 +381,35 @@
     // Category pre-fill + deck filtering happen inside buildQuestionDeck().
   }
 
+  // One id per browser tab, so a replay or refresh updates the same admin row.
+  function getTeamId() {
+    let id = null;
+    try { id = sessionStorage.getItem("vault-team-id"); } catch (_e) {}
+    if (!id) {
+      id = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+      try { sessionStorage.setItem("vault-team-id", id); } catch (_e) {}
+    }
+    return id;
+  }
+
+  // Fire-and-forget report to the admin live board; never blocks the game.
+  function reportScore(status) {
+    if (isPractice() || !window.fetch) return;
+    fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: getTeamId(),
+        group: state.playerName,
+        score: state.totalScore,
+        answered: state.answers.length,
+        total: state.deck.length,
+        status: status || "playing"
+      }),
+      keepalive: true
+    }).catch(function () {});
+  }
+
   function resetGame() {
     clearTimer();
     clearReviewTimer();
@@ -436,6 +463,7 @@
     if (els.vaultProgress) els.vaultProgress.hidden = false;
     syncCategoryProgress();
     history.pushState({ game: true }, "");
+    reportScore();
     showQuestion();
   }
 
@@ -756,6 +784,7 @@
       points: pts.total,
       response: response
     });
+    reportScore();
 
     return {
       correct: correct,
@@ -986,6 +1015,7 @@
     const deducted = Math.min(WRONG_PENALTY_POINTS, state.totalScore);
     state.totalScore -= deducted;
     state.chamberScores[chamber.id] -= deducted;
+    reportScore();
     if (window.GameUI) GameUI.animateScore(els.hudScore, state.totalScore);
     else els.hudScore.textContent = String(state.totalScore);
   }
@@ -1137,7 +1167,6 @@
   function returnToStart() {
     resetGame();
     if (window.BombWidget) BombWidget.hide();
-    if (window.GameUI) GameUI.renderLeaderboardIfVisible(els.startLeaderboard);
     showScreen("start", { dramatic: true });
   }
 
@@ -1351,10 +1380,7 @@
 
     renderAnswerReview();
 
-    if (!isPractice()) {
-      GameUI.saveScore(state.playerName, state.totalScore, tier.eyebrow);
-    }
-    GameUI.renderLeaderboardIfVisible(els.resultsLeaderboard, state.playerName);
+    reportScore("finished");
 
     showScreen("results", {
       dramatic: true,
@@ -1487,10 +1513,6 @@
 
   if (window.BombWidget) BombWidget.init();
   if (window.GameUI) GameUI.init(data.chambers);
-  if (window.GameUI) {
-    GameUI.syncLeaderboardVisibility();
-    GameUI.renderLeaderboardIfVisible(els.startLeaderboard);
-  }
   updateSoundButton();
   syncMusicVolumeSlider();
   syncSfxVolumeSlider();
