@@ -545,7 +545,7 @@
     els.options.innerHTML = "";
 
     if (isFillQuestion(question)) {
-      els.questionHint.textContent = "Type your answer and press Enter or Submit. Wrong answers cost 100 points.";
+      els.questionHint.textContent = "Type your answer and press Enter or Submit. Wrong answers cost " + WRONG_PENALTY_POINTS + " points.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -579,7 +579,7 @@
       startTimer(getEffectiveTimeLimit(question));
       focusFillInput(input);
     } else if (isCheckboxQuestion(question)) {
-      els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cost 100 points.";
+      els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cost " + WRONG_PENALTY_POINTS + " points.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -620,7 +620,7 @@
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
     } else {
-      els.questionHint.textContent = "Choose correctly (keys 1–4). Wrong answers cost 100 points.";
+      els.questionHint.textContent = "Choose correctly (keys 1–4). Wrong answers cost " + WRONG_PENALTY_POINTS + " points.";
       els.questionHint.className = "hint";
       renderChoiceOptions(question);
       showScreen("question");
