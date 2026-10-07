@@ -1951,7 +1951,7 @@ function createPodium(container, teams) {
     cone.rotation.x = 0.11;
     spotRig.add(cone);
 
-    slots[place] = { place, m, team, group, award, spot, cone, plate: null, revealAt: null, burst: false };
+    slots[place] = { place, m, x: m.x, team, group, award, spotRig, spot, cone, plate: null, revealAt: null, burst: false };
   });
 
   // Two sweeping lights for the drumroll.
@@ -1976,7 +1976,7 @@ function createPodium(container, teams) {
     const first = slot.place === 1;
     const sparks = makeSparks({
       count: first ? 320 : 120,
-      at: () => [slot.m.x + rand(-1.2, 1.2), top, rand(-1, 1)],
+      at: () => [slot.x + rand(-1.2, 1.2), top, rand(-1, 1)],
       vel: () => [rand(-2.5, 2.5), rand(first ? 5 : 3, first ? 11 : 7), rand(-1.5, 2.5)],
       size: first ? 0.22 : 0.16,
       life: first ? 2.2 : 1.4,
@@ -1992,7 +1992,7 @@ function createPodium(container, teams) {
     });
     const wave = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.05, 96), waveMat);
     wave.rotation.x = -Math.PI / 2;
-    wave.position.set(slot.m.x, 0.02, 0);
+    wave.position.set(slot.x, 0.02, 0);
     scene.add(wave);
     const life = first ? 1.6 : 1.1;
     bursts.push({
@@ -2015,13 +2015,28 @@ function createPodium(container, teams) {
   let last = performance.now();
   let raf = 0;
 
+  // Portrait screens: pedestals close up like a joined podium and plates shrink,
+  // so the camera can come closer. Fog follows the camera so nothing gets dimmed.
+  let plateScale = 1;
   function fit() {
     const w = Math.max(1, container.clientWidth);
     const h = Math.max(1, container.clientHeight);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    dist = Math.max(15.5, 17 / camera.aspect); // keep all three pedestals + plates in frame on narrow screens
+    const compact = camera.aspect < 1;
+    const spread = compact ? 0.9 : 1;
+    plateScale = compact ? 0.8 : 1;
+    const halfWidth = compact ? 4.7 : 5.6;
+    dist = Math.max(12, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+    scene.fog.near = dist * 0.9;
+    scene.fog.far = dist * 2.8;
+    Object.values(slots).forEach((s) => {
+      s.x = s.m.x * spread;
+      s.group.position.x = s.x;
+      s.spotRig.position.x = s.x;
+      if (s.plate) s.plate.position.x = s.x;
+    });
   }
   fit();
   window.addEventListener("resize", fit);
@@ -2050,7 +2065,7 @@ function createPodium(container, teams) {
         s.award.rotation.y += dt * (s.place === 1 ? 0.9 : 1.4) * (motion || 0);
       }
       if (s.plate) {
-        s.plate.scale.setScalar(Math.max(0.001, easeOutBack(after) * (s.place === 1 ? 1.3 : 1)));
+        s.plate.scale.setScalar(Math.max(0.001, easeOutBack(after) * (s.place === 1 ? 1.3 : 1) * plateScale));
         s.plate.position.y = s.m.h + 2.4 + Math.sin(t * 1.4 + s.place) * 0.06 * motion;
         s.plate.lookAt(camera.position);
       }
@@ -2093,7 +2108,7 @@ function createPodium(container, teams) {
     push += ((drum ? 1 : 0) - push) * Math.min(1, dt * 1.5);
     const intro = motion ? easeInOut(clamp01(t / 2.8)) : 1;
     const d = dist * (1.35 - 0.35 * intro - 0.12 * push);
-    camera.position.set(Math.sin(t * 0.2) * 1.3 * motion, LOOK.y + 1.2 + (1 - intro) * 3, d);
+    camera.position.set(Math.sin(t * 0.2) * dist * 0.08 * motion, LOOK.y + 1.2 + (1 - intro) * 3, d);
     if (shake > 0.001) {
       camera.position.add(v3.set(rand(-1, 1), rand(-1, 1), 0).multiplyScalar(shake * 0.3));
       shake *= Math.exp(-dt * 4);
@@ -2113,7 +2128,7 @@ function createPodium(container, teams) {
           new THREE.PlaneGeometry(3.6, 1.125),
           new THREE.MeshBasicMaterial({ map: plateTex(s.team), transparent: true, depthWrite: false, toneMapped: false })
         );
-        s.plate.position.x = s.m.x;
+        s.plate.position.x = s.x;
         s.plate.scale.setScalar(0.001);
         scene.add(s.plate);
       }
