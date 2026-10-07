@@ -29,7 +29,7 @@ The app opens behind a **password gate**. Participants need the access token.
 | **Default token** | `DG-VAULT-2026` |
 | Unlock via URL | `?token=DG-VAULT-2026` |
 | Session | Stays unlocked in that browser tab (`sessionStorage`) until the tab closes |
-| First unlock | ~3.5s vault **breach animation** (dial, bolts, iris) — skipped on refresh / `prefers-reduced-motion` |
+| First unlock | ~3.5s 3D vault **breach animation** (dial, bolts, door swing) — skipped on refresh / `prefers-reduced-motion` |
 
 Change the token: edit the SHA-256 hash in `js/gate.js` (instructions in that file).
 
@@ -53,7 +53,7 @@ Debrief (answer + justification) always shows after each question. The leaderboa
 
 ## Run locally
 
-No build step or dependencies required.
+No build step or dependencies required. Three.js (background + effects) loads from the jsDelivr CDN via an import map; without it the game still runs, just without the 3D layer.
 
 ```powershell
 # Option 1 — open directly
@@ -87,17 +87,18 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 ```
 ├── index.html              # App shell, gate, breach overlay
 ├── js/
+│   ├── vault3d.js          # Three.js background, timer bomb + breach/shutter/confetti/explosion
 │   ├── sounds.js           # Web Audio SFX + BGM
 │   ├── gate.js             # Access token + breach unlock
 │   ├── questions.js        # Game content (edit this)
 │   ├── ui.js               # Progress map, effects, leaderboard
-│   ├── bomb.js             # Per-question timer bomb
+│   ├── bomb.js             # Timer bomb state (SVG fallback)
 │   └── game.js             # Logic, timers, scoring
 ├── css/
 │   ├── styles.css          # Core layout & theme
 │   ├── styles-enhancements.css
-│   ├── spectacle.css       # Shutter / triumph motion
-│   └── gate-breach.css     # Unlock cinema
+│   ├── spectacle.css       # Hero / triumph motion
+│   └── gate-breach.css     # Unlock terminal readout
 ├── assets/audio/           # BGM playlist
 ├── favicon.svg
 └── og-image.svg

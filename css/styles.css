@@ -54,46 +54,25 @@ body {
   overscroll-behavior: none;
 }
 
-.vault-overlay {
+/* Three.js layers (js/vault3d.js) */
+.vault3d-bg,
+.vault3d-fx {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 28%),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 2px,
-      rgba(0, 0, 0, 0.04) 2px,
-      rgba(0, 0, 0, 0.04) 3px
-    ),
-    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.55) 0%, transparent 55%),
-    linear-gradient(160deg, #181b22 0%, #12141a 45%, #1a1c22 100%);
+}
+
+.vault3d-bg {
   z-index: 0;
 }
 
-.ambient-glow {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 18%, rgba(201, 146, 26, 0.06), transparent 42%);
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-body.vault-active .ambient-glow {
-  opacity: 1;
-}
-
-body.vault-critical .ambient-glow {
-  background: radial-gradient(circle at 50% 15%, rgba(224, 90, 98, 0.14), transparent 50%);
-  animation: criticalPulse 1.2s ease infinite alternate;
-}
-
-@keyframes criticalPulse {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
+/* Above the UI, below the breach terminal (z 400); only shown while an effect plays. */
+.vault3d-fx {
+  z-index: 399;
+  display: none;
 }
 
 /* Page shell — bomb left, content right when active */
@@ -113,6 +92,13 @@ body.vault-critical .ambient-glow {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+}
+
+/* The gate is translucent over the 3D vault, so `hidden` must really hide. */
+.page-shell[hidden],
+.audio-dock[hidden],
+.name-field__error[hidden] {
+  display: none;
 }
 
 body.vault-active .page-shell {
@@ -456,10 +442,6 @@ body.vault-active .bomb-stage__frame {
   }
 }
 
-body.vault-exploded .ambient-glow {
-  opacity: 0;
-}
-
 body.vault-exploded .bomb-stage {
   overflow: visible;
 }
@@ -609,36 +591,6 @@ body.vault-exploded .bomb-stage {
   overflow: visible;
 }
 
-.explosion-flash {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 180%;
-  height: 180%;
-  transform: translate(-50%, -50%);
-  z-index: 6;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 220, 140, 0.95) 0%,
-    rgba(240, 113, 120, 0.55) 32%,
-    transparent 62%
-  );
-  opacity: 0;
-}
-
-.explosion-flash--active {
-  animation: explosionFlash 1.4s ease forwards;
-}
-
-@keyframes explosionFlash {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  8% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  35% { opacity: 0.75; transform: translate(-50%, -50%) scale(1.05); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
-}
-
 .screen__inner--fail {
   border-color: rgba(240, 113, 120, 0.45);
   box-shadow:
@@ -701,9 +653,7 @@ body.vault-exploded .bomb-stage {
   padding: 1.5rem;
   margin: 0;
   max-width: none;
-  background:
-    radial-gradient(ellipse at 50% 20%, rgba(201, 146, 26, 0.12), transparent 55%),
-    var(--bg-deep);
+  background: radial-gradient(ellipse at 50% 50%, rgba(13, 15, 20, 0.7) 0%, rgba(13, 15, 20, 0.25) 60%, transparent 100%);
 }
 
 .screen--gate.screen--active {

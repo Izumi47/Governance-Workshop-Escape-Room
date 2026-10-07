@@ -25,15 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="vault-locked">
-  <div class="vault-overlay" aria-hidden="true"></div>
-  <div id="chamber-atmosphere" class="chamber-atmosphere" aria-hidden="true"></div>
-  <div class="ambient-glow" aria-hidden="true"></div>
-  <div id="vault-shutter" class="vault-shutter" aria-hidden="true">
-    <div class="vault-shutter__blade vault-shutter__blade--top"></div>
-    <div class="vault-shutter__blade vault-shutter__blade--bottom"></div>
-    <div class="vault-shutter__seal">SECURE</div>
-  </div>
-  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+  <!-- Background + cinematic effects are rendered by js/vault3d.js (Three.js) -->
   <div id="score-pop-container" class="score-pop-container" aria-hidden="true"></div>
   <div id="snip-overlay" class="snip-overlay" aria-hidden="true">
     <svg class="snip-overlay__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -42,49 +34,13 @@
     <span>SNIP</span>
   </div>
 
-  <!-- Vault breach unlock sequence (first unlock only) -->
+  <!-- Vault breach unlock sequence (first unlock only); the door itself is 3D -->
   <div id="gate-breach" class="gate-breach" aria-hidden="true" role="presentation">
-    <div class="gate-breach__grid" aria-hidden="true"></div>
-    <div class="gate-breach__vignette" aria-hidden="true"></div>
-    <div class="gate-breach__door">
-      <div class="gate-breach__bloom" aria-hidden="true"></div>
-      <div class="gate-breach__plate">
-        <div class="gate-breach__ring" aria-hidden="true"></div>
-        <div class="gate-breach__ring gate-breach__ring--ticks" aria-hidden="true"></div>
-        <div class="gate-breach__dial" aria-hidden="true">
-          <span class="gate-breach__dial-mark"></span>
-        </div>
-        <div class="gate-breach__hub">
-          <span id="gate-breach-hub" class="gate-breach__hub-text">LOCKED</span>
-        </div>
-        <div class="gate-breach__bolts" aria-hidden="true">
-          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
-          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
-          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
-          <span class="gate-breach__bolt"></span><span class="gate-breach__bolt"></span>
-        </div>
-        <div class="gate-breach__iris" aria-hidden="true">
-          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
-          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
-          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
-          <span class="gate-breach__petal"></span><span class="gate-breach__petal"></span>
-        </div>
-      </div>
-    </div>
-    <div class="gate-breach__sparks" aria-hidden="true">
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-      <span class="gate-breach__spark"></span><span class="gate-breach__spark"></span>
-    </div>
-    <div class="gate-breach__flash" aria-hidden="true"></div>
     <div class="gate-breach__terminal" aria-live="polite">
       <div class="gate-breach__terminal-line">&gt; AUTH TOKEN ACCEPTED<span class="gate-breach__cursor"></span></div>
       <div class="gate-breach__terminal-line gate-breach__terminal-line--warn">&gt; SPINNING COMBINATION…</div>
       <div class="gate-breach__terminal-line">&gt; RETRACTING BOLTS 8/8</div>
-      <div class="gate-breach__terminal-line">&gt; IRIS APERTURE OPEN</div>
+      <div class="gate-breach__terminal-line">&gt; DOOR SEAL RELEASED</div>
       <div class="gate-breach__terminal-line gate-breach__terminal-line--ok">&gt; VAULT ACCESS GRANTED</div>
     </div>
   </div>
@@ -186,7 +142,6 @@
           <span class="bomb-device__label">DEFUSAL UNIT</span>
           <span class="bomb-device__serial">DG-VLT-001</span>
         </div>
-        <div id="explosion-flash" class="explosion-flash" hidden aria-hidden="true"></div>
         <p class="bomb-stage__warning">⚠ QUESTION BOMB — DEFUSE BEFORE THE TIMER HITS ZERO</p>
         <svg id="bomb-svg" class="bomb-svg" viewBox="0 0 420 200" role="img" aria-label="Question timer bomb"></svg>
         <div id="bomb-legend" class="bomb-legend" aria-label="Bomb status" hidden></div>
@@ -195,7 +150,6 @@
     </aside>
 
     <div class="page-shell__main">
-      <div id="timer-urgency" class="timer-urgency" aria-hidden="true"></div>
       <nav id="vault-progress" class="vault-progress" hidden aria-label="Tool category progress"></nav>
 
       <main id="app" class="app">
@@ -392,6 +346,15 @@
     </div>
   </div>
 
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/vault3d.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/gate.js"></script>
   <script src="js/questions.js"></script>

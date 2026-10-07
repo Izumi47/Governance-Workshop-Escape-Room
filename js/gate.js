@@ -23,7 +23,6 @@
   const shellEl = document.querySelector(".page-shell");
   const audioDock = document.getElementById("audio-dock");
   const breachEl = document.getElementById("gate-breach");
-  const hubEl = document.getElementById("gate-breach-hub");
 
   let unlocking = false;
 
@@ -99,57 +98,32 @@
     unlocking = false;
   }
 
+  // The door, bolts and light are drawn by js/vault3d.js on the same timeline
+  // as the sfx cues below; this element only carries the terminal readout.
   function playBreach() {
     return new Promise(function (resolve) {
-      if (!breachEl || prefersReducedMotion()) {
+      if (!breachEl || prefersReducedMotion() || !window.Vault3D) {
         resolve();
         return;
       }
 
       if (gateEl) gateEl.setAttribute("aria-hidden", "true");
-      if (hubEl) {
-        hubEl.textContent = "LOCKED";
-        hubEl.removeAttribute("data-state");
-      }
 
       breachEl.classList.remove("gate-breach--play");
       void breachEl.offsetWidth;
       breachEl.classList.add("gate-breach--active", "gate-breach--play");
       breachEl.setAttribute("aria-hidden", "false");
+      window.Vault3D.breach();
 
       sfx("heartbeat");
-      window.setTimeout(function () {
-        sfx("tick");
-      }, 200);
-      window.setTimeout(function () {
-        sfx("tick");
-      }, 550);
-      window.setTimeout(function () {
-        if (hubEl) {
-          hubEl.textContent = "AUTH…";
-          hubEl.setAttribute("data-state", "auth");
-        }
-        sfx("snip");
-      }, 1100);
-      window.setTimeout(function () {
-        sfx("snip");
-      }, 1650);
-      window.setTimeout(function () {
-        sfx("snip");
-      }, 1900);
-      window.setTimeout(function () {
-        sfx("snip");
-      }, 2100);
-      window.setTimeout(function () {
-        if (hubEl) {
-          hubEl.textContent = "OPEN";
-          hubEl.setAttribute("data-state", "open");
-        }
-        sfx("door");
-      }, 2350);
-      window.setTimeout(function () {
-        sfx("fanfare");
-      }, 2850);
+      [200, 550].forEach(function (ms) {
+        window.setTimeout(function () { sfx("tick"); }, ms);
+      });
+      [1100, 1650, 1900, 2100].forEach(function (ms) {
+        window.setTimeout(function () { sfx("snip"); }, ms);
+      });
+      window.setTimeout(function () { sfx("door"); }, 2350);
+      window.setTimeout(function () { sfx("fanfare"); }, 2850);
 
       window.setTimeout(resolve, BREACH_MS);
     });

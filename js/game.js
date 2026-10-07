@@ -58,7 +58,6 @@
     playerNameError: document.getElementById("player-name-error"),
     briefingMode: document.getElementById("briefing-mode"),
     vaultProgress: document.getElementById("vault-progress"),
-    explosionFlash: document.getElementById("explosion-flash"),
     chamberNumber: document.getElementById("chamber-number"),
     chamberTotal: document.getElementById("chamber-total"),
     chamberIcon: document.getElementById("chamber-icon"),
@@ -402,10 +401,6 @@
     });
     if (window.BombWidget) BombWidget.reset();
     if (window.BombWidget) BombWidget.setTimerCritical(false);
-    if (els.explosionFlash) {
-      els.explosionFlash.hidden = true;
-      els.explosionFlash.classList.remove("explosion-flash--active");
-    }
     if (els.vaultProgress) els.vaultProgress.hidden = true;
     document.body.classList.remove("vault-exploded", "mode-practice");
     if (window.GameUI) GameUI.hideDebrief();
@@ -532,10 +527,6 @@
     if (window.BombWidget) {
       BombWidget.reset();
       BombWidget.setSeconds(getEffectiveTimeLimit(question));
-    }
-    if (els.explosionFlash) {
-      els.explosionFlash.hidden = true;
-      els.explosionFlash.classList.remove("explosion-flash--active");
     }
     document.body.classList.remove("vault-exploded");
 
@@ -1109,11 +1100,7 @@
   }
 
   function playExplosionFlash() {
-    if (!els.explosionFlash) return;
-    els.explosionFlash.hidden = false;
-    els.explosionFlash.classList.remove("explosion-flash--active");
-    void els.explosionFlash.offsetWidth;
-    els.explosionFlash.classList.add("explosion-flash--active");
+    if (window.Vault3D) Vault3D.explode(document.querySelector(".bomb-stage__frame"));
   }
 
   function handleQuestionTimeout() {

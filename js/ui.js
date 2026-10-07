@@ -16,15 +16,10 @@
   let debriefPanelEl = null;
   let scorePopContainer = null;
   let snipOverlay = null;
-  let confettiCanvas = null;
-  let confettiCtx = null;
   let reducedMotion = false;
-  let atmosphereEl = null;
   let scoreAnimFrame = null;
   let startLeaderboardEl = null;
   let resultsLeaderboardEl = null;
-  let shutterEl = null;
-  let shutterTimer = null;
   let sealedChambers = {};
   let bloomTimer = null;
 
@@ -96,28 +91,13 @@
       debriefPanelEl = document.getElementById("debrief-panel");
       scorePopContainer = document.getElementById("score-pop-container");
       snipOverlay = document.getElementById("snip-overlay");
-      confettiCanvas = document.getElementById("confetti-canvas");
-      atmosphereEl = document.getElementById("chamber-atmosphere");
       startLeaderboardEl = document.getElementById("start-leaderboard");
       resultsLeaderboardEl = document.getElementById("results-leaderboard");
-      shutterEl = document.getElementById("vault-shutter");
       sealedChambers = {};
 
       this.syncLeaderboardVisibility();
 
-      if (confettiCanvas) {
-        confettiCtx = confettiCanvas.getContext("2d");
-        this.resizeConfetti();
-        window.addEventListener("resize", this.resizeConfetti.bind(this));
-      }
-
       this.buildProgressMap();
-    },
-
-    resizeConfetti: function () {
-      if (!confettiCanvas) return;
-      confettiCanvas.width = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
     },
 
     buildProgressMap: function () {
@@ -223,21 +203,16 @@
       this.flashWireCut(chamberIndex, answeredDotIndex);
     },
 
+    // body[data-chamber] also drives the 3D background motif (js/vault3d.js).
     setChamberTheme: function (chamber) {
       if (!chamber) return;
       document.body.dataset.chamber = chamber.id;
       document.body.style.setProperty("--chamber-color", chamber.wireColor || "#f0a030");
-      if (atmosphereEl) {
-        atmosphereEl.dataset.chamber = chamber.id;
-      }
     },
 
     clearChamberTheme: function () {
       delete document.body.dataset.chamber;
       document.body.style.removeProperty("--chamber-color");
-      if (atmosphereEl) {
-        delete atmosphereEl.dataset.chamber;
-      }
     },
 
     setTypeBadge: function (type) {
@@ -453,87 +428,22 @@
     },
 
     showConfetti: function () {
-      if (!confettiCtx || reducedMotion) return;
-      const w = confettiCanvas.width;
-      const h = confettiCanvas.height;
-      const colors = ["#c9921a", "#f0c45a", "#3dd68c", "#59c2ff", "#f07178", "#ebe8e1"];
-      const pieces = [];
-      for (let i = 0; i < 140; i += 1) {
-        const ribbon = Math.random() > 0.45;
-        pieces.push({
-          x: Math.random() * w,
-          y: Math.random() * h * -0.4 - 20,
-          w: ribbon ? 3 + Math.random() * 4 : 5 + Math.random() * 7,
-          h: ribbon ? 10 + Math.random() * 16 : 4 + Math.random() * 5,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          vy: 2.2 + Math.random() * 4.5,
-          vx: -2.5 + Math.random() * 5,
-          rot: Math.random() * 360,
-          vr: -10 + Math.random() * 20,
-          gravity: 0.045 + Math.random() * 0.04,
-          wobble: Math.random() * Math.PI * 2,
-          wobbleSpeed: 0.08 + Math.random() * 0.1
-        });
-      }
-
-      let frame = 0;
-      function draw() {
-        confettiCtx.clearRect(0, 0, w, h);
-        pieces.forEach(function (p) {
-          p.vy += p.gravity;
-          p.wobble += p.wobbleSpeed;
-          p.x += p.vx + Math.sin(p.wobble) * 0.8;
-          p.y += p.vy;
-          p.rot += p.vr;
-          confettiCtx.save();
-          confettiCtx.translate(p.x, p.y);
-          confettiCtx.rotate((p.rot * Math.PI) / 180);
-          confettiCtx.fillStyle = p.color;
-          confettiCtx.globalAlpha = Math.max(0, 1 - frame / 150);
-          confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-          confettiCtx.restore();
-        });
-        frame += 1;
-        if (frame < 150) {
-          requestAnimationFrame(draw);
-        } else {
-          confettiCtx.clearRect(0, 0, w, h);
-        }
-      }
-      draw();
+      if (reducedMotion || !window.Vault3D) return;
+      Vault3D.confetti();
     },
 
     playVaultShutter: function (onMidpoint, onComplete) {
-      if (reducedMotion || !shutterEl) {
+      if (reducedMotion || !window.Vault3D) {
         if (typeof onMidpoint === "function") onMidpoint();
         if (typeof onComplete === "function") onComplete();
         return;
       }
-
-      if (shutterTimer) {
-        window.clearTimeout(shutterTimer);
-        shutterTimer = null;
-      }
-
-      shutterEl.classList.remove("vault-shutter--play");
-      void shutterEl.offsetWidth;
-      shutterEl.classList.add("vault-shutter--play");
-      shutterEl.setAttribute("aria-hidden", "false");
-
-      window.setTimeout(function () {
-        if (typeof onMidpoint === "function") onMidpoint();
-      }, 290);
-
-      shutterTimer = window.setTimeout(function () {
-        shutterEl.classList.remove("vault-shutter--play");
-        shutterEl.setAttribute("aria-hidden", "true");
-        shutterTimer = null;
-        if (typeof onComplete === "function") onComplete();
-      }, 900);
+      Vault3D.shutter(onMidpoint, onComplete);
     },
 
     celebrateCorrect: function () {
       if (reducedMotion) return;
+      // The 3D background watches for this class and fires a green shockwave.
       document.body.classList.remove("vault-correct-bloom");
       void document.body.offsetWidth;
       document.body.classList.add("vault-correct-bloom");
@@ -554,10 +464,6 @@
     resetSpectacleState: function () {
       sealedChambers = {};
       document.body.classList.remove("vault-correct-bloom");
-      if (shutterEl) {
-        shutterEl.classList.remove("vault-shutter--play");
-        shutterEl.setAttribute("aria-hidden", "true");
-      }
     },
 
     saveScore: function (name, score, tier) {

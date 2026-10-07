@@ -1,112 +1,7 @@
 /**
  * Vault spectacle pass — mechanical motion, hero presence, triumph FX.
- * Signature: steel vault shutter on major screen changes.
+ * The shutter, atmosphere and correct-answer bloom now live in js/vault3d.js.
  */
-
-/* ========== Vault shutter (signature) ========== */
-.vault-shutter {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  pointer-events: none;
-  visibility: hidden;
-}
-
-.vault-shutter--play {
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.vault-shutter__blade {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 52%;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #c9921a 0 14px,
-      #1a1c22 14px 28px
-    ),
-    linear-gradient(180deg, #2a2e38 0%, #151820 100%);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
-  will-change: transform;
-}
-
-.vault-shutter__blade--top {
-  top: 0;
-  transform: translateY(-105%);
-  border-bottom: 3px solid rgba(201, 146, 26, 0.75);
-  clip-path: polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%);
-}
-
-.vault-shutter__blade--bottom {
-  bottom: 0;
-  transform: translateY(105%);
-  border-top: 3px solid rgba(201, 146, 26, 0.75);
-  clip-path: polygon(0 12%, 50% 0, 100% 12%, 100% 100%, 0 100%);
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #1a1c22 0 14px,
-      #c9921a 14px 28px
-    ),
-    linear-gradient(0deg, #2a2e38 0%, #151820 100%);
-}
-
-.vault-shutter__seal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 2;
-  transform: translate(-50%, -50%) scale(0.6);
-  opacity: 0;
-  padding: 0.45rem 1.1rem;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #1a1c22;
-  background: var(--accent);
-  border: 2px solid #f0c45a;
-  box-shadow:
-    0 0 0 4px rgba(0, 0, 0, 0.35),
-    0 0 28px rgba(201, 146, 26, 0.55);
-}
-
-.vault-shutter--play .vault-shutter__blade--top {
-  animation: shutterTop 0.85s cubic-bezier(0.7, 0, 0.2, 1) forwards;
-}
-
-.vault-shutter--play .vault-shutter__blade--bottom {
-  animation: shutterBottom 0.85s cubic-bezier(0.7, 0, 0.2, 1) forwards;
-}
-
-.vault-shutter--play .vault-shutter__seal {
-  animation: shutterSeal 0.85s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
-}
-
-@keyframes shutterTop {
-  0% { transform: translateY(-105%); }
-  32% { transform: translateY(0); }
-  58% { transform: translateY(0); }
-  100% { transform: translateY(-105%); }
-}
-
-@keyframes shutterBottom {
-  0% { transform: translateY(105%); }
-  32% { transform: translateY(0); }
-  58% { transform: translateY(0); }
-  100% { transform: translateY(105%); }
-}
-
-@keyframes shutterSeal {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-8deg); }
-  28% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(0deg); }
-  55% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(0deg); }
-}
 
 /* ========== Hero presence ========== */
 @media (prefers-reduced-motion: no-preference) {
@@ -209,27 +104,6 @@
   75%, 100% { transform: translateX(70%) rotate(8deg); }
 }
 
-/* ========== Living atmosphere ========== */
-@media (prefers-reduced-motion: no-preference) {
-  .chamber-atmosphere[data-chamber] {
-    animation: atmosphereDrift 14s ease-in-out infinite alternate;
-  }
-
-  body.vault-active .ambient-glow {
-    animation: ambientPulse 6s ease-in-out infinite;
-  }
-}
-
-@keyframes atmosphereDrift {
-  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
-  to { transform: translate3d(0, -1.5%, 0) scale(1.04); opacity: 0.85; }
-}
-
-@keyframes ambientPulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
 /* ========== Question / gameplay ========== */
 @media (prefers-reduced-motion: no-preference) {
   .question-card--enter {
@@ -268,24 +142,6 @@
     transform: translateY(0) scale(1);
     filter: blur(0);
   }
-}
-
-/* Correct answer bloom */
-body.vault-correct-bloom::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-  background:
-    radial-gradient(ellipse at 50% 45%, rgba(61, 214, 140, 0.22) 0%, transparent 55%);
-  animation: correctBloom 0.7s ease-out forwards;
-}
-
-@keyframes correctBloom {
-  0% { opacity: 0; }
-  30% { opacity: 1; }
-  100% { opacity: 0; }
 }
 
 .question-card--correct-lock {
@@ -407,21 +263,10 @@ body.vault-correct-bloom::after {
 
 /* Reduced motion safety for spectacle */
 @media (prefers-reduced-motion: reduce) {
-  .vault-shutter,
-  .vault-shutter--play {
-    display: none !important;
-  }
-
-  body.vault-correct-bloom::after {
-    display: none;
-  }
-
   .hero__hazard,
   .hero__bolts span,
   .hero__plate,
   .btn--primary::after,
-  .chamber-atmosphere[data-chamber],
-  body.vault-active .ambient-glow,
   .question-card--enter,
   .hud--enter,
   .timer--warning .timer__fill,

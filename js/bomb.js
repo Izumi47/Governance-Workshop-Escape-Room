@@ -17,6 +17,8 @@
   let displayEl = null;
   let fuseEl = null;
   let bodyGroup = null;
+  // Three.js model from js/vault3d.js; the SVG stays as the no-WebGL fallback.
+  let bomb3d = null;
 
   function rand(min, max) {
     return min + Math.random() * (max - min);
@@ -160,6 +162,16 @@
     }, parent);
   }
 
+  // vault3d.js is a deferred module, so it may load after init(); mount on show().
+  function mount3d() {
+    if (bomb3d || !svgEl || !window.Vault3D || !Vault3D.mountBomb) return;
+    try {
+      bomb3d = Vault3D.mountBomb(svgEl);
+    } catch (err) {
+      console.warn("3D bomb unavailable:", err);
+    }
+  }
+
   function setStatus(text, className) {
     if (!statusEl) return;
     statusEl.textContent = text;
@@ -197,6 +209,7 @@
     },
 
     show: function () {
+      mount3d();
       if (stageEl) stageEl.hidden = false;
       document.body.classList.add("vault-active");
     },
@@ -227,6 +240,7 @@
         displayEl.setAttribute("fill", "#f07178");
         displayEl.textContent = "30";
       }
+      if (bomb3d) bomb3d.reset();
       setStatus("Armed — answer correctly to defuse", "");
     },
 
@@ -234,6 +248,7 @@
       if (!displayEl) return;
       if (displayEl.textContent === "BOOM" || displayEl.textContent === "OK") return;
       displayEl.textContent = formatSeconds(seconds);
+      if (bomb3d) bomb3d.setSeconds(seconds);
     },
 
     setTimerCritical: function (critical) {
@@ -241,6 +256,7 @@
       displayEl.classList.toggle("bomb-display--critical", critical);
       if (stageEl) stageEl.classList.toggle("bomb-stage--critical", critical);
       document.body.classList.toggle("vault-critical", critical);
+      if (bomb3d) bomb3d.setCritical(critical);
       if (critical) {
         displayEl.setAttribute("fill", "#ffb454");
         setStatus("Critical — timer almost gone!", "bomb-status--critical");
@@ -262,6 +278,7 @@
         displayEl.setAttribute("fill", "#3dd68c");
         displayEl.classList.remove("bomb-display--critical");
       }
+      if (bomb3d) bomb3d.defuse();
       setStatus("Defused — correct answer accepted", "bomb-status--safe");
     },
 
@@ -290,9 +307,10 @@
       }
       setStatus("Detonated — moving to next question", "bomb-status--exploded");
 
+      if (bomb3d) bomb3d.explode();
       if (!reducedMotion()) {
         scatterChrome();
-        spawnDebris();
+        if (!bomb3d) spawnDebris();
       } else if (bodyGroup) {
         bodyGroup.style.opacity = "0";
       }

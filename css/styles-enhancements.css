@@ -1009,14 +1009,6 @@ kbd {
   color: var(--accent);
 }
 
-/* Confetti */
-.confetti-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 95;
-}
-
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1041,21 +1033,11 @@ kbd {
     transform: none !important;
   }
 
-  .timer-urgency,
-  body.timer-danger .timer-urgency {
-    animation: none !important;
-  }
-
   .bomb-device--wire-cut,
   body.vault-active .bomb-device--wire-cut,
   .vault-progress__dot--flash,
   .vault-progress__step--wire-cut {
     animation: none !important;
-  }
-
-  .explosion-flash--active {
-    animation: none;
-    opacity: 0.5;
   }
 }
 
@@ -1126,71 +1108,6 @@ kbd {
 }
 
 /* ========== Visual polish pass ========== */
-
-/* Chamber atmosphere */
-.chamber-atmosphere {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.55s ease;
-}
-
-.chamber-atmosphere[data-chamber] {
-  opacity: 1;
-}
-
-.chamber-atmosphere[data-chamber="python"] {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 28px,
-      rgba(61, 214, 140, 0.035) 28px,
-      rgba(61, 214, 140, 0.035) 29px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 28px,
-      rgba(61, 214, 140, 0.035) 28px,
-      rgba(61, 214, 140, 0.035) 29px
-    );
-}
-
-.chamber-atmosphere[data-chamber="powerbi"] {
-  background-image:
-    radial-gradient(circle at 15% 25%, rgba(89, 194, 255, 0.09) 0 2px, transparent 3px),
-    radial-gradient(circle at 55% 70%, rgba(89, 194, 255, 0.07) 0 2px, transparent 3px),
-    radial-gradient(circle at 85% 35%, rgba(89, 194, 255, 0.06) 0 1.5px, transparent 2.5px);
-  background-size: 72px 72px, 96px 96px, 64px 64px;
-}
-
-.chamber-atmosphere[data-chamber="alm"] {
-  background:
-    repeating-linear-gradient(
-      115deg,
-      transparent,
-      transparent 18px,
-      rgba(240, 160, 48, 0.04) 18px,
-      rgba(240, 160, 48, 0.04) 19px
-    ),
-    repeating-linear-gradient(
-      -115deg,
-      transparent,
-      transparent 18px,
-      rgba(240, 160, 48, 0.03) 18px,
-      rgba(240, 160, 48, 0.03) 19px
-    );
-}
-
-.chamber-atmosphere[data-chamber="sop"] {
-  background:
-    linear-gradient(rgba(240, 113, 120, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(240, 113, 120, 0.03) 1px, transparent 1px);
-  background-size: 22px 22px;
-}
 
 /* Staggered option entrance */
 .option-enter {
@@ -1272,34 +1189,6 @@ kbd {
     box-shadow: 0 0 0 1px var(--chamber-accent, var(--accent)),
       0 0 18px color-mix(in srgb, var(--chamber-accent, var(--accent)) 35%, transparent);
   }
-}
-
-/* Timer urgency */
-.timer-urgency {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-body.timer-warning .timer-urgency {
-  opacity: 1;
-  background:
-    radial-gradient(ellipse at center, transparent 55%, rgba(255, 180, 80, 0.08) 78%, rgba(255, 180, 80, 0.16) 100%);
-}
-
-body.timer-danger .timer-urgency {
-  opacity: 1;
-  animation: urgencyVignette 1s ease infinite alternate;
-  background:
-    radial-gradient(ellipse at center, transparent 50%, rgba(240, 113, 120, 0.14) 75%, rgba(240, 113, 120, 0.32) 100%);
-}
-
-@keyframes urgencyVignette {
-  from { opacity: 0.75; }
-  to { opacity: 1; }
 }
 
 body.timer-warning .timer__fill {
