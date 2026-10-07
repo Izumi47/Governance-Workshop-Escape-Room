@@ -926,7 +926,9 @@ function createFx() {
       if (typeof fn === "function") fn();
     };
 
-    const e = run(0.9, (t, dt) => {
+    const SLOW = 1.6; // timeline stretch: 1 = original 0.9s
+    const e = run(0.9 * SLOW, (rt, dt) => {
+      const t = rt / SLOW;
       const close = easeIn(seg(t, 0, 0.29));
       const open = easeInOut(seg(t, 0.55, 0.9));
       const y = closedY + (openY - closedY) * (1 - close + open);
