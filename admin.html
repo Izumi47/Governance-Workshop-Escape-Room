@@ -332,6 +332,7 @@
     }
   </script>
   <!-- 3D background + podium; if WebGL/CDN fails the page falls back to the CSS podium. -->
+  <script src="js/motion.js"></script>
   <script type="module" src="js/vault3d.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="js/questions.js"></script>
@@ -347,7 +348,7 @@
       const ROOM_KEY = "vault-admin-room";
       const ROOMS_EVERY = 5; // refresh the session list (team counts) every 5th poll
       const CONFETTI_COLORS = ["#f0c24a", "#3dd68c", "#59c2ff", "#e05a62", "#ebe8e1"];
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reducedMotion = window.prefersReducedMotion();
 
       const $ = function (id) { return document.getElementById(id); };
       const els = {

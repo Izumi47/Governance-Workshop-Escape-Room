@@ -179,7 +179,7 @@
 
   window.GameSounds = {
     init: function () {
-      reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      reducedMotion = window.prefersReducedMotion();
       const stored = localStorage.getItem("vault-sound-muted");
       if (stored === "1") muted = true;
       musicVolume = loadStoredVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);

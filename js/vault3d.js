@@ -24,11 +24,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
 // ?motion=1 forces animations on (remembered), ?motion=0 restores the OS preference.
-const motionFlag = new URLSearchParams(location.search).get("motion");
-try { if (motionFlag) localStorage.setItem("motion", motionFlag); } catch (e) {}
-let forced = null;
-try { forced = localStorage.getItem("motion"); } catch (e) {}
-const REDUCED = forced === "1" ? false : window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const REDUCED = window.prefersReducedMotion();
 const body = document.body;
 
 const PALETTE = {

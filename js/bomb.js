@@ -25,7 +25,7 @@
   }
 
   function reducedMotion() {
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return window.prefersReducedMotion();
   }
 
   function el(tag, attrs, parent) {
