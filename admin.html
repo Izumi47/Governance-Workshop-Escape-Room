@@ -36,7 +36,12 @@
       color: var(--text);
       font-family: var(--font-body);
     }
-    main { max-width: 1200px; margin: 0 auto; }
+    main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+
+    /* Three.js layers from js/vault3d.js (same rules as css/styles.css). */
+    .vault3d-bg, .vault3d-fx { position: fixed; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+    .vault3d-bg { z-index: 0; }
+    .vault3d-fx { z-index: 399; display: none; }
     header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 1rem; }
     h1 { font-family: var(--font-display); font-size: 2.4rem; letter-spacing: 0.04em; margin: 0; color: var(--accent); }
     h2 { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.04em; margin: 0; }
@@ -59,7 +64,15 @@
     form { display: flex; gap: 0.5rem; max-width: 420px; margin: 3rem auto; }
     form input { flex: 1; min-width: 0; }
 
-    .panel { background: var(--bg-panel); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+    .panel {
+      background: rgba(28, 31, 39, 0.82);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(201, 146, 26, 0.18);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
     .panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.85rem 0.75rem 0.5rem; }
     .panel__note { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
@@ -112,7 +125,8 @@
     body.projector h2 { font-size: 2rem; }
     body.projector main { max-width: none; }
     body.projector .admin-only,
-    body.projector .q__answer { display: none !important; }
+    body.projector .q__answer,
+    body.projector #panel-standings { display: none !important; }
     body.projector .score { font-size: 1.8rem; }
     body.projector td, body.projector th { padding: 0.8rem 1rem; }
     body.projector .q__text, body.projector .cat__row { font-size: 1.1rem; }
@@ -161,7 +175,13 @@
     .podium__col--2.is-up .podium__block { height: 50%; }
     .podium__col--3.is-up .podium__block { height: 35%; }
     .podium__col--1.is-up .podium__name { color: #f0c24a; text-shadow: 0 0 24px rgba(240, 194, 74, 0.6); }
-    .podium__close { position: absolute; top: 1rem; right: 1rem; }
+    .podium__close { position: absolute; top: 1rem; right: 1rem; z-index: 2; }
+    .podium__title, .podium__drum, .podium__stage { position: relative; z-index: 1; }
+    .podium__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .podium--3d { justify-content: flex-start; padding-top: 1.5rem; }
+    .podium--3d .podium__stage { display: none; }
+    .podium--3d .podium__title { text-shadow: 0 0 30px rgba(240, 196, 90, 0.45); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .confetti { position: absolute; top: -20px; width: 10px; height: 16px; pointer-events: none; animation: fall linear forwards; }
     @keyframes fall {
       to { transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin)); }
@@ -172,6 +192,7 @@
     }
     @media (max-width: 600px) {
       .col-seen { display: none; }
+      .podium__title { padding: 0 4.5rem; text-align: center; font-size: 2rem; }
       th, td { padding: 0.5rem; }
     }
   </style>
@@ -196,7 +217,7 @@
     </form>
 
     <div id="dashboard" hidden>
-      <section class="panel" aria-labelledby="h-standings">
+      <section class="panel" id="panel-standings" aria-labelledby="h-standings">
         <div class="panel__head"><h2 id="h-standings">Standings</h2></div>
         <div class="table-wrap">
           <table>
@@ -240,8 +261,19 @@
     <h2 class="podium__title" id="podium-title">The Vault Champions</h2>
     <p class="podium__drum" id="podium-drum">And the winner is…</p>
     <div class="podium__stage" id="podium-stage"></div>
+    <p class="sr-only" id="podium-announce" aria-live="polite"></p>
   </div>
 
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <!-- 3D background + podium; if WebGL/CDN fails the page falls back to the CSS podium. -->
+  <script type="module" src="js/vault3d.js"></script>
   <script src="js/questions.js"></script>
   <script>
     (function () {
@@ -390,10 +422,19 @@
           });
       }
 
+      // Green shockwave in the 3D background (vault3d.js watches this body class).
+      function pulseBackground() {
+        document.body.classList.remove("vault-correct-bloom");
+        void document.body.offsetWidth;
+        document.body.classList.add("vault-correct-bloom");
+        setTimeout(function () { document.body.classList.remove("vault-correct-bloom"); }, 800);
+      }
+
       function renderStandings() {
         const teams = rankedTeams();
         const now = Date.now();
         const ranks = {};
+        let overtook = false;
         els.rows.innerHTML = "";
 
         if (!teams.length) emptyRow(els.rows, 6, "No teams yet — scores appear once a group starts its mission.");
@@ -407,7 +448,10 @@
           const move = moves[t.id] && moves[t.id].until > now ? moves[t.id] : null;
 
           const tr = el("tr");
-          if (move && move.fresh && move.delta > 0) tr.className = "overtake";
+          if (move && move.fresh && move.delta > 0) {
+            tr.className = "overtake";
+            overtook = true;
+          }
           if (move) move.fresh = false;
 
           const rankCell = cell(tr, "#" + rank, "num rank");
@@ -428,6 +472,7 @@
         });
 
         prevRanks = ranks;
+        if (overtook) pulseBackground();
         const playing = teams.filter(function (t) { return t.status === "playing"; }).length;
         setMeta(teams.length + " teams · " + playing + " playing · updated " + new Date().toLocaleTimeString());
       }
@@ -589,6 +634,9 @@
         }
       }
 
+      const PLACE_NAMES = { 1: "First", 2: "Second", 3: "Third" };
+      let stage3d = null;
+
       function openPodium() {
         const top = rankedTeams().slice(0, 3);
         if (!top.length) {
@@ -596,22 +644,45 @@
           return;
         }
         closePodium();
-        const cols = { 1: podiumColumn(top[0], 1), 2: podiumColumn(top[1], 2), 3: podiumColumn(top[2], 3) };
-        // Visual order: 2nd, 1st, 3rd.
-        els.podiumStage.append(cols[2], cols[1], cols[3]);
         els.podium.hidden = false;
         $("podium-close").focus();
 
+        // 3D podium when the Three.js layer loaded; CSS podium otherwise.
+        let cols = null;
+        if (window.Vault3D && window.Vault3D.podium) {
+          try {
+            stage3d = window.Vault3D.podium(els.podium, top);
+            els.podium.classList.add("podium--3d");
+          } catch (_e) {
+            stage3d = null;
+          }
+        }
+        if (!stage3d) {
+          cols = { 1: podiumColumn(top[0], 1), 2: podiumColumn(top[1], 2), 3: podiumColumn(top[2], 3) };
+          els.podiumStage.append(cols[2], cols[1], cols[3]); // visual order: 2nd, 1st, 3rd
+        }
+
+        function up(place) {
+          if (stage3d) stage3d.reveal(place);
+          else cols[place].classList.add("is-up");
+          const team = top[place - 1];
+          if (team) $("podium-announce").textContent = PLACE_NAMES[place] + " place: " + team.group + ", " + team.score + " points";
+        }
+        function drum(on) {
+          els.podiumDrum.classList.toggle("is-on", on);
+          if (stage3d) stage3d.drumroll(on);
+        }
+
         const steps = reducedMotion
-          ? [[0, function () { [1, 2, 3].forEach(function (p) { cols[p].classList.add("is-up"); }); }]]
+          ? [[0, function () { up(3); up(2); up(1); }]]
           : [
-              [600, function () { cols[3].classList.add("is-up"); }],
-              [2200, function () { cols[2].classList.add("is-up"); }],
-              [3800, function () { els.podiumDrum.classList.add("is-on"); }],
-              [6300, function () {
-                els.podiumDrum.classList.remove("is-on");
-                cols[1].classList.add("is-up");
-                confetti();
+              [1200, function () { up(3); }],
+              [2900, function () { up(2); }],
+              [4600, function () { drum(true); }],
+              [7400, function () {
+                drum(false);
+                up(1);
+                if (!stage3d) confetti();
               }]
             ];
         podiumTimers = steps.map(function (s) { return setTimeout(s[1], s[0]); });
@@ -620,9 +691,13 @@
       function closePodium() {
         podiumTimers.forEach(clearTimeout);
         podiumTimers = [];
+        if (stage3d) stage3d.dispose();
+        stage3d = null;
         els.podium.hidden = true;
+        els.podium.classList.remove("podium--3d");
         els.podiumStage.innerHTML = "";
         els.podiumDrum.classList.remove("is-on");
+        $("podium-announce").textContent = "";
         els.podium.querySelectorAll(".confetti").forEach(function (c) { c.remove(); });
       }
 

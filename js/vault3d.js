@@ -14,6 +14,7 @@
  *   Vault3D.confetti()                 confetti cannons on results (ui.js)
  *   Vault3D.explode(originEl)          bomb detonation (game.js)
  *   Vault3D.mountBomb(svgEl)           3D timer bomb, driven by bomb.js
+ *   Vault3D.podium(el, [1st,2nd,3rd])  winners podium on the admin page (admin.html)
  *
  * If WebGL or the CDN is unavailable, window.Vault3D is never defined and the
  * callers skip the effect.
@@ -1759,6 +1760,376 @@ function createBomb(svgEl) {
   };
 }
 
+/* ================================================================ PODIUM */
+
+const MEDAL = {
+  1: { color: 0xf0c45a, light: 0xffd98a, h: 3, x: 0, power: 320 },
+  2: { color: 0xc8ced8, light: 0xdfe8ff, h: 2.1, x: -3.3, power: 200 },
+  3: { color: 0xd08a4a, light: 0xffb27a, h: 1.4, x: 3.3, power: 200 }
+};
+
+/** Name + score plate, drawn when revealed so web fonts have loaded. */
+function plateTex(team) {
+  const tex = canvasTex(1024, 320, (g, w) => {
+    const max = w - 60;
+    let size = 104;
+    const font = () => { g.font = "700 " + size + 'px "IBM Plex Sans", system-ui, sans-serif'; };
+    font();
+    let name = String(team.group);
+    while (g.measureText(name).width > max && size > 60) { size -= 4; font(); }
+    if (g.measureText(name).width > max) {
+      while (name.length && g.measureText(name + "…").width > max) name = name.slice(0, -1);
+      name += "…";
+    }
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.shadowColor = "rgba(0,0,0,0.85)";
+    g.shadowBlur = 18;
+    g.fillStyle = "#ebe8e1";
+    g.fillText(name, w / 2, 110);
+    g.font = '700 76px "JetBrains Mono", ui-monospace, monospace';
+    g.fillStyle = "#f0c45a";
+    g.shadowColor = "rgba(240,196,90,0.6)";
+    g.fillText(team.score + " PTS", w / 2, 235);
+  });
+  tex.userData.own = true;
+  return tex;
+}
+
+function makeTrophy() {
+  const gold = new THREE.MeshStandardMaterial({ color: 0xf0c45a, metalness: 1, roughness: 0.18, emissive: 0x3a2a00 });
+  const cup = new THREE.Group();
+  const profile = [
+    [0, 0], [0.48, 0], [0.48, 0.1], [0.2, 0.16], [0.12, 0.38], [0.1, 0.58], [0.17, 0.66],
+    [0.44, 0.8], [0.52, 1.05], [0.54, 1.32], [0.49, 1.32], [0.46, 1.08], [0.37, 0.86], [0, 0.78]
+  ].map(([x, y]) => new THREE.Vector2(x, y));
+  cup.add(new THREE.Mesh(new THREE.LatheGeometry(profile, 64), gold));
+  [-1, 1].forEach((side) => {
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.045, 12, 32, Math.PI), gold);
+    handle.position.set(side * 0.5, 1.05, 0);
+    handle.rotation.z = -side * Math.PI / 2;
+    cup.add(handle);
+  });
+  return cup;
+}
+
+function makeMedal(color) {
+  const medal = new THREE.Group();
+  const metal = new THREE.MeshStandardMaterial({ color, metalness: 1, roughness: 0.22 });
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.09, 48), metal);
+  disc.rotation.x = Math.PI / 2;
+  medal.add(disc);
+  medal.add(new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.045, 12, 64), metal));
+  medal.position.y = 0.7;
+  return medal;
+}
+
+/**
+ * Winners podium inside `container` (admin.html). teams = [1st, 2nd, 3rd], any may be missing.
+ * The page drives the timeline: reveal(place), drumroll(on), dispose().
+ */
+function createPodium(container, teams) {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const canvas = renderer.domElement;
+  canvas.className = "podium__canvas";
+  canvas.setAttribute("aria-hidden", "true");
+  container.insertBefore(canvas, container.firstChild);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(PALETTE.bg);
+  scene.fog = new THREE.Fog(PALETTE.bg, 16, 42);
+  scene.environment = envFor(renderer);
+  scene.environmentIntensity = 0.45;
+  scene.add(new THREE.HemisphereLight(0x8090a8, 0x0a0a10, 0.25));
+  const rim = new THREE.PointLight(PALETTE.amber, 60, 40, 1.4);
+  rim.position.set(0, 6, -9);
+  scene.add(rim);
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  const LOOK = new THREE.Vector3(0, 3.4, 0);
+  let dist = 13;
+
+  // Polished floor + glowing ring.
+  const floor = new THREE.Mesh(
+    new THREE.CircleGeometry(18, 96),
+    new THREE.MeshStandardMaterial({ color: 0x14161b, metalness: 0.75, roughness: 0.3 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: PALETTE.amber, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false
+  });
+  const floorRing = new THREE.Mesh(new THREE.RingGeometry(5.7, 5.85, 128), ringMat);
+  floorRing.rotation.x = -Math.PI / 2;
+  floorRing.position.y = 0.01;
+  scene.add(floorRing);
+
+  // Vault ring backdrop.
+  const backdrop = new THREE.Group();
+  backdrop.position.set(0, 4.5, -11);
+  scene.add(backdrop);
+  backdrop.add(new THREE.Mesh(new THREE.TorusGeometry(9, 0.38, 20, 128), steel()));
+  const tickMat = new THREE.MeshBasicMaterial({ color: PALETTE.amber, transparent: true, opacity: 0.7 });
+  const ticks = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 1, 0.1), tickMat, 72);
+  for (let i = 0; i < 72; i += 1) {
+    const a = (i / 72) * Math.PI * 2;
+    q.setFromAxisAngle(zAxis, a);
+    v3.set(-Math.sin(a) * 7.6, Math.cos(a) * 7.6, 0);
+    ticks.setMatrixAt(i, m4.compose(v3, q, s3.set(1, i % 6 === 0 ? 1.1 : 0.5, 1)));
+  }
+  backdrop.add(ticks);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTex, color: PALETTE.amber, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false
+  }));
+  halo.scale.set(22, 22, 1);
+  halo.position.z = -1;
+  backdrop.add(halo);
+
+  // Rising dust.
+  const D = 420;
+  const dPos = new Float32Array(D * 3);
+  for (let i = 0; i < D; i += 1) dPos.set([rand(-14, 14), rand(0, 12), rand(-10, 6)], i * 3);
+  const dGeo = new THREE.BufferGeometry();
+  dGeo.setAttribute("position", new THREE.BufferAttribute(dPos, 3));
+  scene.add(new THREE.Points(dGeo, new THREE.PointsMaterial({
+    color: 0xf0c45a, size: 0.09, map: glowTex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending
+  })));
+
+  function lightCone(color) {
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(1.9, 9, 40, 1, true),
+      new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false
+      })
+    );
+    cone.position.y = -4.5; // apex at the group origin
+    return cone;
+  }
+
+  // One pedestal per place, sunk below the floor until revealed.
+  const slots = {};
+  [1, 2, 3].forEach((place) => {
+    const m = MEDAL[place];
+    const team = teams[place - 1] || null;
+    const group = new THREE.Group();
+    group.position.set(m.x, -m.h - 0.2, 0);
+    scene.add(group);
+
+    const block = new THREE.Mesh(new RoundedBoxGeometry(2.8, m.h, 2.4, 4, 0.12), steel({ color: 0x8f959f }));
+    block.position.y = m.h / 2;
+    group.add(block);
+    const trim = new THREE.Mesh(
+      new THREE.BoxGeometry(2.84, 0.12, 2.44),
+      new THREE.MeshStandardMaterial({ color: m.color, emissive: m.color, emissiveIntensity: 0.6, metalness: 0.9, roughness: 0.3 })
+    );
+    trim.position.y = m.h - 0.18;
+    group.add(trim);
+    const badge = new THREE.Mesh(
+      new THREE.CircleGeometry(0.55, 48),
+      new THREE.MeshBasicMaterial({ map: labelTex(String(place), "#" + m.color.toString(16).padStart(6, "0")), transparent: true, toneMapped: false })
+    );
+    badge.position.set(0, Math.max(0.65, m.h - 0.85), 1.21);
+    group.add(badge);
+
+    let award = null;
+    if (team) {
+      award = place === 1 ? makeTrophy() : makeMedal(m.color);
+      award.position.y += m.h;
+      award.scale.setScalar(0.001);
+      group.add(award);
+    }
+
+    const spotRig = new THREE.Group();
+    spotRig.position.set(m.x, 11, 1.2);
+    scene.add(spotRig);
+    const spot = new THREE.SpotLight(m.light, 0, 30, 0.34, 0.55, 1.2);
+    spot.target.position.set(0, -11 + m.h, -1.2);
+    spotRig.add(spot, spot.target);
+    const cone = lightCone(m.light);
+    cone.rotation.x = 0.11;
+    spotRig.add(cone);
+
+    slots[place] = { place, m, team, group, award, spot, cone, plate: null, revealAt: null, burst: false };
+  });
+
+  // Two sweeping lights for the drumroll.
+  const sweepers = [-1, 1].map((side) => {
+    const rig = new THREE.Group();
+    rig.position.set(side * 6, 11, 2);
+    scene.add(rig);
+    const spot = new THREE.SpotLight(0xfff1cc, 0, 30, 0.22, 0.5, 1.2);
+    spot.target.position.set(0, -11, 0);
+    rig.add(spot, spot.target);
+    const cone = lightCone(0xfff1cc);
+    rig.add(cone);
+    return { rig, spot, cone, side };
+  });
+
+  // Short-lived bursts (sparks, floor shockwaves) and the 1st-place flash.
+  let bursts = [];
+  let flash = 0;
+  function burst(slot) {
+    if (REDUCED) return;
+    const top = slot.m.h;
+    const first = slot.place === 1;
+    const sparks = makeSparks({
+      count: first ? 320 : 120,
+      at: () => [slot.m.x + rand(-1.2, 1.2), top, rand(-1, 1)],
+      vel: () => [rand(-2.5, 2.5), rand(first ? 5 : 3, first ? 11 : 7), rand(-1.5, 2.5)],
+      size: first ? 0.22 : 0.16,
+      life: first ? 2.2 : 1.4,
+      colors: [0xffffff, slot.m.color],
+      gravity: 7,
+      drag: 0.6
+    });
+    scene.add(sparks.points);
+    bursts.push({ obj: sparks.points, life: first ? 2.2 : 1.4, age: 0, step: (dt) => sparks.step(dt) });
+
+    const waveMat = new THREE.MeshBasicMaterial({
+      color: slot.m.color, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false
+    });
+    const wave = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.05, 96), waveMat);
+    wave.rotation.x = -Math.PI / 2;
+    wave.position.set(slot.m.x, 0.02, 0);
+    scene.add(wave);
+    const life = first ? 1.6 : 1.1;
+    bursts.push({
+      obj: wave, life, age: 0,
+      step(dt) {
+        const k = clamp01(this.age / life);
+        wave.scale.setScalar(1 + easeOut(k) * (first ? 12 : 6));
+        waveMat.opacity = 0.9 * (1 - k);
+      }
+    });
+    if (first) {
+      shake = Math.max(shake, 0.6);
+      flash = 1;
+      if (window.Vault3D) window.Vault3D.confetti();
+    }
+  }
+
+  let drum = false;
+  let t = 0;
+  let last = performance.now();
+  let raf = 0;
+
+  function fit() {
+    const w = Math.max(1, container.clientWidth);
+    const h = Math.max(1, container.clientHeight);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    dist = Math.max(15.5, 17 / camera.aspect); // keep all three pedestals + plates in frame on narrow screens
+  }
+  fit();
+  window.addEventListener("resize", fit);
+
+  const motion = REDUCED ? 0 : 1;
+  let push = 0;
+
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    t += dt;
+
+    Object.values(slots).forEach((s) => {
+      if (s.revealAt === null) return;
+      const rise = s.place === 1 ? 0.8 : 1;
+      const k = motion ? clamp01((t - s.revealAt) / rise) : 1;
+      s.group.position.y = (-s.m.h - 0.2) * (1 - (s.place === 1 ? easeOutBack(k) : easeOut(k)));
+      if (k >= 0.85 && !s.burst) {
+        s.burst = true;
+        burst(s);
+      }
+      const after = motion ? clamp01((t - s.revealAt - rise * 0.7) / 0.6) : 1;
+      if (s.award) {
+        s.award.scale.setScalar(Math.max(0.001, easeOutBack(after)));
+        s.award.rotation.y += dt * (s.place === 1 ? 0.9 : 1.4) * (motion || 0);
+      }
+      if (s.plate) {
+        s.plate.scale.setScalar(Math.max(0.001, easeOutBack(after) * (s.place === 1 ? 1.3 : 1)));
+        s.plate.position.y = s.m.h + 2.4 + Math.sin(t * 1.4 + s.place) * 0.06 * motion;
+        s.plate.lookAt(camera.position);
+      }
+      const lit = motion ? clamp01((t - s.revealAt) / 0.35) : 1;
+      s.spot.intensity = s.m.power * lit * (1 + Math.sin(t * 7 + s.place) * 0.03 * motion);
+      s.cone.material.opacity = 0.075 * lit;
+    });
+
+    sweepers.forEach((sw) => {
+      const target = drum ? 1 : 0;
+      const cur = sw.spot.intensity / 260;
+      const next = cur + (target - cur) * Math.min(1, dt * 5);
+      sw.spot.intensity = next * 260;
+      sw.cone.material.opacity = next * 0.06;
+      sw.rig.rotation.z = sw.side * (0.35 + Math.sin(t * 2.6 + sw.side) * 0.45) * motion;
+    });
+
+    bursts = bursts.filter((b) => {
+      b.age += dt;
+      b.step(dt);
+      if (b.age < b.life) return true;
+      scene.remove(b.obj);
+      disposeTree(b.obj);
+      return false;
+    });
+
+    for (let i = 0; i < D; i += 1) {
+      const j = i * 3 + 1;
+      dPos[j] += dt * 0.35 * motion;
+      if (dPos[j] > 12) dPos[j] = 0;
+    }
+    dGeo.attributes.position.needsUpdate = true;
+
+    backdrop.rotation.z += dt * 0.05 * motion;
+    ringMat.opacity = 0.35 + (drum ? 0.35 * (0.5 + 0.5 * Math.sin(t * 14)) : 0.15) + flash * 0.5;
+    flash = Math.max(0, flash - dt * 1.5);
+    halo.material.opacity = 0.3 + flash * 0.5;
+
+    // Camera: slow dolly in from wide, push in during the drumroll, gentle sway.
+    push += ((drum ? 1 : 0) - push) * Math.min(1, dt * 1.5);
+    const intro = motion ? easeInOut(clamp01(t / 2.8)) : 1;
+    const d = dist * (1.35 - 0.35 * intro - 0.12 * push);
+    camera.position.set(Math.sin(t * 0.2) * 1.3 * motion, LOOK.y + 1.2 + (1 - intro) * 3, d);
+    if (shake > 0.001) {
+      camera.position.add(v3.set(rand(-1, 1), rand(-1, 1), 0).multiplyScalar(shake * 0.3));
+      shake *= Math.exp(-dt * 4);
+    }
+    camera.lookAt(LOOK);
+    renderer.render(scene, camera);
+  }
+  raf = requestAnimationFrame(frame);
+
+  return {
+    reveal(place) {
+      const s = slots[place];
+      if (!s || s.revealAt !== null) return;
+      s.revealAt = t;
+      if (s.team) {
+        s.plate = new THREE.Mesh(
+          new THREE.PlaneGeometry(3.6, 1.125),
+          new THREE.MeshBasicMaterial({ map: plateTex(s.team), transparent: true, depthWrite: false, toneMapped: false })
+        );
+        s.plate.position.x = s.m.x;
+        s.plate.scale.setScalar(0.001);
+        scene.add(s.plate);
+      }
+    },
+    drumroll(on) { drum = !!on; },
+    dispose() {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", fit);
+      disposeTree(scene);
+      scene.environment.dispose();
+      renderer.dispose();
+      canvas.remove();
+    }
+  };
+}
+
 /* ================================================================== boot */
 
 try {
@@ -1769,7 +2140,7 @@ try {
     bgLayer.resize();
     fxLayer.resize();
   });
-  window.Vault3D = Object.assign(fxLayer.api, { mountBomb: createBomb });
+  window.Vault3D = Object.assign(fxLayer.api, { mountBomb: createBomb, podium: createPodium });
 } catch (err) {
   console.warn("Vault3D disabled:", err);
 }

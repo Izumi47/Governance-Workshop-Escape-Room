@@ -53,8 +53,9 @@ Admin page features:
 - **Standings** with rank-change arrows and a highlight when a team overtakes another
 - **Category accuracy**: room-wide % solved on first try, per manual
 - **Hardest questions**: top 10 by first-try rate, wrong tries and timeouts (answers hidden until you tick *Show answers*)
-- **Reveal winners**: animated podium (3rd → 2nd → drumroll → 1st + confetti)
-- **Projector mode**: fullscreen, larger text, hides admin-only controls and answers
+- **Reveal winners**: Three.js podium — pedestals rise under spotlights (3rd → 2nd → sweeping-light drumroll → 1st with trophy, sparks and confetti cannons). Falls back to a CSS podium without WebGL
+- **Projector mode**: fullscreen, larger text; hides the standings, admin-only controls and answers so scores stay secret until the reveal
+- Same 3D vault background as the game; a green shockwave pulses when a team overtakes another
 - **Export standings / questions** as CSV
 
 ---
@@ -87,11 +88,11 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 
 ```
 ├── index.html              # App shell, gate, breach overlay
-├── admin.html              # Live scores for facilitators
+├── admin.html              # Live scores for facilitators (3D background + podium via vault3d.js)
 ├── api/score.js            # Vercel function: live scores in Upstash Redis
 ├── tests/score-api.check.js # node tests/score-api.check.js
 ├── js/
-│   ├── vault3d.js          # Three.js background, timer bomb + breach/shutter/confetti/explosion
+│   ├── vault3d.js          # Three.js background, timer bomb, breach/shutter/confetti/explosion, admin podium
 │   ├── sounds.js           # Web Audio SFX + BGM
 │   ├── gate.js             # Access token + breach unlock
 │   ├── questions.js        # Game content (edit this)
