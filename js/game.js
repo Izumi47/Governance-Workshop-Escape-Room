@@ -28,6 +28,7 @@
     reviewTimeLeft: 0,
     mode: "full",
     playerName: "Specialist",
+    room: null,
     wrongAttempts: 0,
     lastTickSecond: -1
   };
@@ -57,6 +58,9 @@
     btnBombToggle: document.getElementById("btn-bomb-toggle"),
     playerName: document.getElementById("player-name"),
     playerNameError: document.getElementById("player-name-error"),
+    roomCode: document.getElementById("room-code"),
+    roomStatus: document.getElementById("room-status"),
+    roomCodeError: document.getElementById("room-code-error"),
     briefingMode: document.getElementById("briefing-mode"),
     vaultProgress: document.getElementById("vault-progress"),
     chamberNumber: document.getElementById("chamber-number"),
@@ -254,6 +258,85 @@
     return true;
   }
 
+  // ---- Workshop session (room) code: scores go to that session's admin board only ----
+  const ROOM_KEY = "vault-room";
+
+  /** "abc123", " ABC-123 " → "ABC-123"; anything else → null (same rule as api/_lib.js). */
+  function normalizeRoomCode(value) {
+    const code = String(value || "").toUpperCase().replace(/[\s-]/g, "");
+    return /^[A-Z0-9]{6}$/.test(code) ? code.slice(0, 3) + "-" + code.slice(3) : null;
+  }
+
+  function setRoomError(message) {
+    const field = els.roomCode.closest(".name-field");
+    if (field) field.classList.toggle("name-field--error", Boolean(message));
+    els.roomCodeError.textContent = message || "";
+    els.roomCodeError.hidden = !message;
+    if (message) els.roomStatus.textContent = "";
+  }
+
+  /**
+   * Resolves to { ok, name } for a known session, { ok: false, message } for a wrong code.
+   * If the API can't be reached (e.g. a plain local server) the code is trusted; reports fail silently.
+   */
+  function lookupRoom(code) {
+    return fetch("/api/rooms?code=" + encodeURIComponent(code), { cache: "no-store" })
+      .then(function (res) {
+        return res.json().then(
+          function (body) {
+            if (res.ok && body.room) return { ok: true, name: body.room.name };
+            if (res.status === 404 || res.status === 400) return { ok: false, message: body.error || "Unknown session code" };
+            return { ok: true, name: null };
+          },
+          function () { return { ok: true, name: null }; }
+        );
+      })
+      .catch(function () { return { ok: true, name: null }; });
+  }
+
+  function showRoomName(name) {
+    els.roomStatus.textContent = name ? "Session: " + name : "";
+  }
+
+  function startScoredRun() {
+    if (!validatePlayerName()) return;
+    const code = normalizeRoomCode(els.roomCode.value);
+    if (!code) {
+      setRoomError("Enter the session code from your facilitator (e.g. ABC-123).");
+      els.roomCode.focus();
+      return;
+    }
+    els.roomCode.value = code;
+    els.btnStart.disabled = true;
+    lookupRoom(code).then(function (found) {
+      els.btnStart.disabled = false;
+      if (!found.ok) {
+        setRoomError(found.message + " — check the code with your facilitator.");
+        els.roomCode.focus();
+        return;
+      }
+      setRoomError("");
+      showRoomName(found.name);
+      state.room = code;
+      try { sessionStorage.setItem(ROOM_KEY, code); } catch (_e) {}
+      beginSession("full");
+    });
+  }
+
+  function initRoomCode() {
+    let code = normalizeRoomCode(params.get("room"));
+    if (!code) {
+      try { code = normalizeRoomCode(sessionStorage.getItem(ROOM_KEY)); } catch (_e) {}
+    }
+    if (!code) return;
+    els.roomCode.value = code;
+    lookupRoom(code).then(function (found) {
+      if (els.roomCode.value !== code) return;
+      if (found.ok) showRoomName(found.name);
+      else setRoomError(found.message + " — check the code with your facilitator.");
+    });
+  }
+
   function clearPlayerNameError() {
     const field = els.playerName.closest(".name-field");
     if (field) field.classList.remove("name-field--error");
@@ -396,11 +479,12 @@
   // Fire-and-forget report to the admin live board; never blocks the game.
   // `question` (optional) is one finished question for the admin's hardest-questions stats.
   function reportScore(status, question) {
-    if (isPractice() || !window.fetch) return;
+    if (isPractice() || !state.room || !window.fetch) return;
     fetch("/api/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        room: state.room,
         id: getTeamId(),
         group: state.playerName,
         score: state.totalScore,
@@ -1471,7 +1555,12 @@
     }
   }
 
-  els.btnStart.addEventListener("click", function () { beginSession("full"); });
+  els.btnStart.addEventListener("click", startScoredRun);
+  els.roomCode.addEventListener("input", function () {
+    setRoomError("");
+    showRoomName("");
+  });
+  initRoomCode();
   if (els.btnPractice) {
     els.btnPractice.addEventListener("click", function () { beginSession("practice"); });
   }

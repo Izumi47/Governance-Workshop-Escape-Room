@@ -61,8 +61,39 @@
     button:hover, button:focus-visible { border-color: var(--accent); }
     .btn-primary { border-color: var(--accent); color: var(--accent); }
     .btn-danger:hover { border-color: var(--danger); color: var(--danger); }
-    form { display: flex; gap: 0.5rem; max-width: 420px; margin: 3rem auto; }
+    form { display: flex; gap: 0.5rem; }
     form input { flex: 1; min-width: 0; }
+    #login { max-width: 420px; margin: 3rem auto; }
+    select {
+      font: inherit;
+      font-size: 0.9rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.6rem;
+      background: var(--bg-panel);
+      color: var(--text);
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    /* Session picker + join card */
+    .sessions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; padding: 0.75rem; }
+    .sessions__pick { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted); flex: 1 1 18rem; min-width: 0; }
+    .sessions__pick select { flex: 1; }
+    .sessions__new { flex: 1 1 18rem; }
+    .sessions__empty { margin: 0; color: var(--text-muted); font-size: 0.9rem; flex-basis: 100%; }
+    details.join summary { cursor: pointer; list-style: none; padding: 0.85rem 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+    details.join summary::-webkit-details-marker { display: none; }
+    details.join summary::after { content: "Hide"; font-size: 0.75rem; color: var(--text-muted); }
+    details.join:not([open]) summary::after { content: "Show"; }
+    .join__body { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; padding: 0 0.75rem 1rem; }
+    .join__qr { width: 160px; height: 160px; background: #fff; border-radius: var(--radius); padding: 8px; flex: none; }
+    .join__qr svg { display: block; width: 100%; height: 100%; }
+    .join__info { min-width: 0; flex: 1 1 14rem; }
+    .join__label { margin: 0 0 0.2rem; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .join__code { margin: 0 0 0.75rem; font-family: var(--font-mono); font-weight: 700; font-size: 2.4rem; letter-spacing: 0.12em; color: var(--accent); }
+    .join__link { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+    .join__link a { color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
 
     .panel {
       background: rgba(28, 31, 39, 0.82);
@@ -128,6 +159,8 @@
     body.projector .q__answer,
     body.projector #panel-standings { display: none !important; }
     body.projector .score { font-size: 1.8rem; }
+    body.projector .join__qr { width: 260px; height: 260px; }
+    body.projector .join__code { font-size: 4.5rem; }
     body.projector td, body.projector th { padding: 0.8rem 1rem; }
     body.projector .q__text, body.projector .cat__row { font-size: 1.1rem; }
 
@@ -216,7 +249,33 @@
       <button type="submit">Open</button>
     </form>
 
+    <section class="panel sessions admin-only" id="sessions" aria-label="Workshop sessions" hidden>
+      <label class="sessions__pick">Session <select id="room-select"></select></label>
+      <form class="sessions__new" id="new-room">
+        <input id="new-room-name" maxlength="40" placeholder="New session name, e.g. Finance – Morning" aria-label="New session name">
+        <button type="submit">New session</button>
+      </form>
+      <button type="button" class="btn-danger" id="btn-delete-room">Delete session</button>
+      <p class="sessions__empty" id="sessions-empty" hidden>No sessions yet — create one, then share its code or QR with participants.</p>
+    </section>
+
     <div id="dashboard" hidden>
+      <details class="panel join" id="join" open>
+        <summary><h2>Join this session</h2></summary>
+        <div class="join__body">
+          <div class="join__qr" id="join-qr" role="img" aria-label="QR code for the join link"></div>
+          <div class="join__info">
+            <p class="join__label">Session code</p>
+            <p class="join__code" id="join-code"></p>
+            <p class="join__label">Join link</p>
+            <div class="join__link">
+              <a id="join-link" target="_blank" rel="noopener"></a>
+              <button type="button" class="admin-only" id="btn-copy-link">Copy link</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
       <section class="panel" id="panel-standings" aria-labelledby="h-standings">
         <div class="panel__head"><h2 id="h-standings">Standings</h2></div>
         <div class="table-wrap">
@@ -274,6 +333,7 @@
   </script>
   <!-- 3D background + podium; if WebGL/CDN fails the page falls back to the CSS podium. -->
   <script type="module" src="js/vault3d.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="js/questions.js"></script>
   <script>
     (function () {
@@ -284,6 +344,8 @@
       const MOVE_SHOW_MS = 15000;
       const HARDEST_LIMIT = 10;
       const TOKEN_KEY = "vault-admin-token";
+      const ROOM_KEY = "vault-admin-room";
+      const ROOMS_EVERY = 5; // refresh the session list (team counts) every 5th poll
       const CONFETTI_COLORS = ["#f0c24a", "#3dd68c", "#59c2ff", "#e05a62", "#ebe8e1"];
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -301,7 +363,17 @@
         projector: $("btn-projector"),
         podium: $("podium"),
         podiumStage: $("podium-stage"),
-        podiumDrum: $("podium-drum")
+        podiumDrum: $("podium-drum"),
+        sessions: $("sessions"),
+        roomSelect: $("room-select"),
+        sessionsEmpty: $("sessions-empty"),
+        newRoom: $("new-room"),
+        newRoomName: $("new-room-name"),
+        deleteRoom: $("btn-delete-room"),
+        join: $("join"),
+        joinQr: $("join-qr"),
+        joinCode: $("join-code"),
+        joinLink: $("join-link")
       };
 
       // Question lookup from the game's own content: id → { question, chamber }.
@@ -318,7 +390,11 @@
       try { token = sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_e) {}
       let latest = { teams: [], questions: {} };
       let prevRanks = null;
-      const moves = {};
+      let moves = {};
+      let rooms = [];
+      let room = null; // selected session code
+      try { room = sessionStorage.getItem(ROOM_KEY); } catch (_e) {}
+      let pollCount = 0;
       let podiumTimers = [];
 
       function setToken(value) {
@@ -334,8 +410,10 @@
         els.meta.classList.toggle("meta--error", Boolean(isError));
       }
 
-      function api(method) {
-        return fetch("/api/score", { method: method, headers: { "x-admin-token": token }, cache: "no-store" })
+      function api(method, path, body) {
+        const headers = { "x-admin-token": token };
+        if (body) headers["Content-Type"] = "application/json";
+        return fetch(path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined, cache: "no-store" })
           .then(function (res) {
             if (res.status === 401) {
               showLogin("Wrong admin token.");
@@ -474,7 +552,8 @@
         prevRanks = ranks;
         if (overtook) pulseBackground();
         const playing = teams.filter(function (t) { return t.status === "playing"; }).length;
-        setMeta(teams.length + " teams · " + playing + " playing · updated " + new Date().toLocaleTimeString());
+        const current = currentRoom();
+        setMeta((current ? current.name + " · " : "") + teams.length + " teams · " + playing + " playing · updated " + new Date().toLocaleTimeString());
       }
 
       function renderCategories() {
@@ -525,13 +604,92 @@
         renderHardest();
       }
 
+      function currentRoom() {
+        return rooms.find(function (r) { return r.code === room; }) || null;
+      }
+
+      function joinUrl(code) {
+        return new URL("./", location.href).href + "?room=" + encodeURIComponent(code);
+      }
+
+      function renderJoin() {
+        const current = currentRoom();
+        if (!current) return;
+        const url = joinUrl(current.code);
+        els.joinCode.textContent = current.code;
+        els.joinLink.textContent = url;
+        els.joinLink.href = url;
+        els.joinQr.innerHTML = "";
+        if (window.qrcode) {
+          const qr = window.qrcode(0, "M");
+          qr.addData(url);
+          qr.make();
+          els.joinQr.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+        } else {
+          els.joinQr.hidden = true; // CDN blocked: code + link still work
+        }
+      }
+
+      function renderRooms() {
+        els.roomSelect.innerHTML = "";
+        rooms.forEach(function (r) {
+          const opt = el("option", null, r.name + " · " + r.code + " · " + r.teams + (r.teams === 1 ? " team" : " teams"));
+          opt.value = r.code;
+          els.roomSelect.appendChild(opt);
+        });
+        const has = Boolean(currentRoom());
+        els.roomSelect.value = has ? room : "";
+        els.roomSelect.disabled = !rooms.length;
+        els.deleteRoom.hidden = !has;
+        els.sessionsEmpty.hidden = rooms.length > 0;
+        els.dashboard.hidden = !has;
+        els.controls.hidden = !has;
+        if (!has) setMeta("Create a session to get started.");
+        renderJoin();
+      }
+
+      function selectRoom(code) {
+        room = code;
+        try {
+          if (code) sessionStorage.setItem(ROOM_KEY, code);
+          else sessionStorage.removeItem(ROOM_KEY);
+        } catch (_e) {}
+        latest = { teams: [], questions: {} };
+        prevRanks = null;
+        moves = {};
+        renderRooms();
+        if (currentRoom()) {
+          render();
+          poll();
+        }
+      }
+
+      function loadRooms() {
+        return api("GET", "/api/rooms").then(function (data) {
+          rooms = data.rooms || [];
+          if (!currentRoom()) selectRoom(rooms.length ? rooms[0].code : null);
+          else renderRooms();
+        });
+      }
+
       function poll() {
-        api("GET")
+        if (!currentRoom()) return;
+        const code = room;
+        api("GET", "/api/score?room=" + encodeURIComponent(code))
           .then(function (data) {
+            if (code !== room) return; // switched sessions mid-request
             latest = { teams: data.teams || [], questions: data.questions || {} };
             render();
           })
           .catch(function (err) { if (err) setMeta("Couldn't refresh: " + err.message, true); });
+      }
+
+      function tick() {
+        pollCount += 1;
+        if (pollCount % ROOMS_EVERY === 0) {
+          loadRooms().catch(function (err) { if (err) setMeta("Couldn't refresh sessions: " + err.message, true); });
+        }
+        poll();
       }
 
       function showLogin(message) {
@@ -540,6 +698,7 @@
         setToken("");
         els.dashboard.hidden = true;
         els.controls.hidden = true;
+        els.sessions.hidden = true;
         els.login.hidden = false;
         setMeta(message || "Enter the admin token to view live scores.", Boolean(message));
         els.token.focus();
@@ -547,11 +706,12 @@
 
       function showDashboard() {
         els.login.hidden = true;
-        els.dashboard.hidden = false;
-        els.controls.hidden = false;
-        poll();
+        els.sessions.hidden = false;
+        loadRooms()
+          .then(poll)
+          .catch(function (err) { if (err) setMeta("Couldn't load sessions: " + err.message, true); });
         clearInterval(pollId);
-        pollId = setInterval(poll, POLL_MS);
+        pollId = setInterval(tick, POLL_MS);
       }
 
       // ---- CSV export ----
@@ -563,7 +723,7 @@
 
       function downloadCsv(name, header, rows) {
         const text = [header].concat(rows).map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
-        const url = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" }));
+        const url = URL.createObjectURL(new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" }));
         const a = el("a");
         a.href = url;
         a.download = name + "-" + new Date().toISOString().slice(0, 10) + ".csv";
@@ -574,7 +734,7 @@
       }
 
       $("btn-csv-teams").addEventListener("click", function () {
-        downloadCsv("vault-standings",
+        downloadCsv("vault-standings-" + room,
           ["Rank", "Group", "Score", "Answered", "Total", "Status", "Last update"],
           rankedTeams().map(function (t, i) {
             return [i + 1, t.group, t.score, t.answered, t.total, t.status, new Date(t.updated).toISOString()];
@@ -582,7 +742,7 @@
       });
 
       $("btn-csv-questions").addEventListener("click", function () {
-        downloadCsv("vault-questions",
+        downloadCsv("vault-questions-" + room,
           ["Question ID", "Category", "Question", "Answer", "Teams", "First try %", "Avg wrong tries", "Timeouts"],
           questionRows().map(function (r) {
             return [r.id, r.category, r.text, r.answer, r.seen, Math.round(r.firstRate * 100), r.avgWrong.toFixed(2), r.timeouts];
@@ -721,10 +881,46 @@
       });
 
       $("btn-reset").addEventListener("click", function () {
-        if (!confirm("Clear every team's score and all question stats?")) return;
-        api("DELETE")
+        const current = currentRoom();
+        if (!current || !confirm("Clear every team's score and question stats in \"" + current.name + "\"?")) return;
+        api("DELETE", "/api/score?room=" + encodeURIComponent(current.code))
           .then(function () { prevRanks = null; poll(); })
           .catch(function (err) { if (err) setMeta("Reset failed: " + err.message, true); });
+      });
+
+      els.roomSelect.addEventListener("change", function () { selectRoom(els.roomSelect.value); });
+
+      els.newRoom.addEventListener("submit", function (event) {
+        event.preventDefault();
+        api("POST", "/api/rooms", { name: els.newRoomName.value.trim() })
+          .then(function (data) {
+            els.newRoomName.value = "";
+            rooms.unshift(data.room);
+            selectRoom(data.room.code);
+            els.join.open = true;
+          })
+          .catch(function (err) { if (err) setMeta("Couldn't create session: " + err.message, true); });
+      });
+
+      els.deleteRoom.addEventListener("click", function () {
+        const current = currentRoom();
+        if (!current || !confirm("Delete \"" + current.name + "\" (" + current.code + ") and all its scores? Its code stops working.")) return;
+        api("DELETE", "/api/rooms?code=" + encodeURIComponent(current.code))
+          .then(function () {
+            rooms = rooms.filter(function (r) { return r.code !== current.code; });
+            selectRoom(rooms.length ? rooms[0].code : null);
+          })
+          .catch(function (err) { if (err) setMeta("Delete failed: " + err.message, true); });
+      });
+
+      $("btn-copy-link").addEventListener("click", function () {
+        const btn = this;
+        const done = function (ok) {
+          btn.textContent = ok ? "Copied!" : "Copy failed";
+          setTimeout(function () { btn.textContent = "Copy link"; }, 1500);
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(els.joinLink.href).then(function () { done(true); }, function () { done(false); });
+        else done(false);
       });
 
       if (token) showDashboard();

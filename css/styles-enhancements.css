@@ -575,6 +575,20 @@ body.vault-active .vault-progress {
   border-color: var(--accent);
 }
 
+.name-field__input--code {
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.name-field__hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--success);
+  margin-top: 0.35rem;
+  min-height: 1em;
+}
+
 .start-actions {
   display: flex;
   flex-direction: column;

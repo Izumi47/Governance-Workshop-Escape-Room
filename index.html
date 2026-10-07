@@ -179,6 +179,13 @@
             <span id="player-name-error" class="name-field__error" role="alert" hidden>Please enter your name to begin.</span>
           </label>
 
+          <label class="name-field" for="room-code">
+            <span class="name-field__label">Session code <span class="name-field__required" aria-hidden="true">*</span></span>
+            <input id="room-code" class="name-field__input name-field__input--code" type="text" maxlength="8" placeholder="e.g. ABC-123" autocomplete="off" autocapitalize="characters" spellcheck="false" required aria-required="true" aria-describedby="room-status">
+            <span id="room-status" class="name-field__hint" aria-live="polite"></span>
+            <span id="room-code-error" class="name-field__error" role="alert" hidden></span>
+          </label>
+
           <div class="start-actions">
             <button id="btn-start" class="btn btn--primary btn--pulse" type="button">Arm the Bomb</button>
           </div>

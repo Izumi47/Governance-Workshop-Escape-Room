@@ -8,7 +8,7 @@ A **Keep Talking and Nobody Explodes**-style workshop game: **1 Defuser** sees t
 
 ## How it works
 
-1. Enter your **group name** (Defuser operates this screen).
+1. Open the session link/QR from the facilitator (or type the **session code**), then enter your **group name** (Defuser operates this screen).
 2. Read the briefing — assign **1 Defuser** + **4 Experts** (Python, Power BI, Power Apps/ALM, SOP manuals).
 3. Defuser sits **opposite** the Experts. Experts must **not** look at the screen.
 4. Play **40 mixed modules**. Defuser reads aloud; Experts look up the manuals and call the answer.
@@ -45,9 +45,12 @@ sessionStorage.removeItem("vault-access-ok"); location.reload();
 | Audience | URL |
 |----------|-----|
 | **Participants** | `https://governance-workshop-escape-room.vercel.app` |
+| **Participants** (one session) | `https://governance-workshop-escape-room.vercel.app/?room=ABC-123` (shown on the admin page with a QR code) |
 | **Admin** (live scores) | `https://governance-workshop-escape-room.vercel.app/admin.html` |
 
-Debrief (answer + justification) always shows after each question. Participants never see other teams' scores. The **admin page** shows every team's live score, progress and status, refreshing every 3 seconds. It asks for the admin token (the `ADMIN_TOKEN` env var, separate from the workshop token). Practice runs are not reported. **Reset board** clears all teams and question stats; both also expire 24h after the last update.
+Debrief (answer + justification) always shows after each question. Participants never see other teams' scores. The **admin page** shows every team's live score, progress and status, refreshing every 3 seconds. It asks for the admin token (the `ADMIN_TOKEN` env var, separate from the workshop token).
+
+**Sessions:** each workshop group gets its own session (code like `ABC-123`). On the admin page, create a session with **New session**, then share its code, join link or QR. Participants need a valid code to start; their scores only appear in that session. Switch between sessions with the dropdown — several can run at once. **Reset board** clears the selected session; **Delete session** removes it and its code stops working. Sessions expire 7 days after creation.
 
 Admin page features:
 - **Standings** with rank-change arrows and a highlight when a team overtakes another
@@ -89,7 +92,9 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 ```
 ├── index.html              # App shell, gate, breach overlay
 ├── admin.html              # Live scores for facilitators (3D background + podium via vault3d.js)
-├── api/score.js            # Vercel function: live scores in Upstash Redis
+├── api/_lib.js             # Shared Redis/auth helpers + key layout
+├── api/rooms.js            # Vercel function: create/list/look up sessions
+├── api/score.js            # Vercel function: live scores per session in Upstash Redis
 ├── tests/score-api.check.js # node tests/score-api.check.js
 ├── js/
 │   ├── vault3d.js          # Three.js background, timer bomb, breach/shutter/confetti/explosion, admin podium
@@ -113,7 +118,7 @@ Replace placeholder ALM/SOP questions with your org-specific governance content.
 
 ## Deploy to Vercel
 
-A **static site** (no `package.json`, no build) plus one serverless function, `api/score.js`, for live scores.
+A **static site** (no `package.json`, no build) plus two serverless functions in `api/` for sessions and live scores.
 
 | Setting | Value |
 |---------|--------|
@@ -139,7 +144,8 @@ See **[DOCUMENTATION.md](./DOCUMENTATION.md)** for full deployment notes, Speed 
 - HTML, CSS, JavaScript (no framework)
 - Web Audio API for sound effects
 - `localStorage` for sound preference
-- Vercel function + Upstash Redis for the admin live board
+- Vercel functions + Upstash Redis for sessions and the admin live board
+- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (CDN) for the join QR
 
 ---
 
