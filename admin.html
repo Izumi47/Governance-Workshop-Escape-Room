@@ -20,6 +20,8 @@
       --accent: #c9921a;
       --success: #3dd68c;
       --danger: #e05a62;
+      --silver: #b9c0cc;
+      --bronze: #c97c3a;
       --font-display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
       --font-body: "IBM Plex Sans", system-ui, sans-serif;
       --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -34,13 +36,16 @@
       color: var(--text);
       font-family: var(--font-body);
     }
-    main { max-width: 960px; margin: 0 auto; }
-    header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1rem; margin-bottom: 1rem; }
+    main { max-width: 1200px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 1rem; }
     h1 { font-family: var(--font-display); font-size: 2.4rem; letter-spacing: 0.04em; margin: 0; color: var(--accent); }
-    .meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); flex: 1; }
+    h2 { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.04em; margin: 0; }
+    .meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); flex: 1; min-width: 12rem; }
     .meta--error { color: var(--danger); }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     button, input {
       font: inherit;
+      font-size: 0.85rem;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       padding: 0.5rem 0.9rem;
@@ -48,24 +53,123 @@
       color: var(--text);
     }
     button { cursor: pointer; }
-    button:hover { border-color: var(--accent); }
+    button:hover, button:focus-visible { border-color: var(--accent); }
+    .btn-primary { border-color: var(--accent); color: var(--accent); }
     .btn-danger:hover { border-color: var(--danger); color: var(--danger); }
     form { display: flex; gap: 0.5rem; max-width: 420px; margin: 3rem auto; }
     form input { flex: 1; min-width: 0; }
-    table { width: 100%; border-collapse: collapse; background: var(--bg-panel); border-radius: var(--radius); overflow: hidden; }
-    th, td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
-    td.num { font-family: var(--font-mono); }
-    .rank { color: var(--text-muted); width: 3rem; }
+
+    .panel { background: var(--bg-panel); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+    .panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.85rem 0.75rem 0.5rem; }
+    .panel__note { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
+    .grid .panel { margin-bottom: 0; }
+    @media (max-width: 800px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.65rem 0.75rem; text-align: left; border-top: 1px solid var(--border); vertical-align: top; }
+    th { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+    td.num { font-family: var(--font-mono); white-space: nowrap; }
+    .rank { color: var(--text-muted); width: 5rem; }
+    .move { font-size: 0.75rem; margin-left: 0.35rem; }
+    .move--up { color: var(--success); }
+    .move--down { color: var(--danger); }
     .score { font-weight: 700; color: var(--accent); font-size: 1.15rem; }
-    .group { font-weight: 600; overflow-wrap: anywhere; }
-    .bar { height: 6px; background: var(--border); border-radius: 3px; min-width: 80px; margin-top: 0.3rem; }
-    .bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+    .group { font-weight: 600; overflow-wrap: anywhere; min-width: 8rem; }
+    .bar { height: 6px; background: var(--border); border-radius: 3px; min-width: 80px; margin-top: 0.3rem; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.6s ease; }
     .status { font-family: var(--font-mono); font-size: 0.75rem; }
     .status--playing { color: var(--accent); }
     .status--finished { color: var(--success); }
     .status--idle { color: var(--text-muted); }
     .empty { text-align: center; color: var(--text-muted); padding: 2rem; }
+    tr.overtake { animation: overtake 2.4s ease-out; }
+    @keyframes overtake {
+      0%, 30% { background: rgba(61, 214, 140, 0.18); }
+      100% { background: transparent; }
+    }
+
+    .cats { padding: 0.25rem 0.75rem 0.9rem; display: grid; gap: 0.85rem; }
+    .cat__row { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.9rem; }
+    .cat__name { font-weight: 600; }
+    .cat__pct { font-family: var(--font-mono); }
+    .cat__sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .cat .bar { height: 10px; }
+    .cat .bar > span { background: var(--cat-color, var(--accent)); }
+
+    .q__text { font-size: 0.9rem; }
+    .q__cat { display: block; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; font-family: var(--font-mono); }
+    .q__answer { display: block; font-size: 0.8rem; color: var(--success); margin-top: 0.35rem; }
+    .pct--bad { color: var(--danger); }
+    .pct--mid { color: var(--accent); }
+    .pct--good { color: var(--success); }
+    label.toggle { font-size: 0.75rem; color: var(--text-muted); display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
+
+    /* Projector mode: bigger type, no admin controls. */
+    body.projector { font-size: 1.25rem; padding: 1.25rem 2rem; }
+    body.projector h1 { font-size: 3.4rem; }
+    body.projector h2 { font-size: 2rem; }
+    body.projector main { max-width: none; }
+    body.projector .admin-only,
+    body.projector .q__answer { display: none !important; }
+    body.projector .score { font-size: 1.8rem; }
+    body.projector td, body.projector th { padding: 0.8rem 1rem; }
+    body.projector .q__text, body.projector .cat__row { font-size: 1.1rem; }
+
+    /* Podium */
+    .podium {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(ellipse at 50% 30%, #2a2414 0%, var(--bg-deep) 70%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      overflow: hidden;
+    }
+    .podium__title { font-family: var(--font-display); font-size: clamp(2.2rem, 6vw, 4.5rem); color: var(--accent); letter-spacing: 0.05em; margin: 0; }
+    .podium__drum { font-family: var(--font-mono); color: var(--text-muted); min-height: 1.6em; margin: 0.5rem 0 2rem; font-size: clamp(0.9rem, 2vw, 1.3rem); opacity: 0; transition: opacity 0.6s; }
+    .podium__drum.is-on { opacity: 1; animation: pulse 0.5s ease-in-out infinite alternate; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+    .podium__stage { display: flex; align-items: flex-end; justify-content: center; gap: clamp(0.5rem, 2vw, 1.5rem); width: min(900px, 100%); height: min(55vh, 460px); }
+    .podium__col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; max-width: 280px; }
+    .podium__who { text-align: center; margin-bottom: 0.75rem; opacity: 0; transform: translateY(20px) scale(0.9); transition: opacity 0.6s, transform 0.6s cubic-bezier(0.2, 1.6, 0.4, 1); }
+    .podium__name { font-weight: 700; font-size: clamp(1rem, 2.6vw, 1.8rem); overflow-wrap: anywhere; }
+    .podium__score { font-family: var(--font-mono); color: var(--accent); font-size: clamp(0.9rem, 2vw, 1.4rem); }
+    .podium__block {
+      width: 100%;
+      height: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 0.5rem;
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      color: var(--bg-deep);
+      transition: height 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      overflow: hidden;
+    }
+    .podium__col--1 .podium__block { background: linear-gradient(180deg, #f0c24a, var(--accent)); }
+    .podium__col--2 .podium__block { background: linear-gradient(180deg, #dfe3ea, var(--silver)); }
+    .podium__col--3 .podium__block { background: linear-gradient(180deg, #e39a5a, var(--bronze)); }
+    .podium__col.is-up .podium__who { opacity: 1; transform: none; }
+    .podium__col--1.is-up .podium__block { height: 70%; }
+    .podium__col--2.is-up .podium__block { height: 50%; }
+    .podium__col--3.is-up .podium__block { height: 35%; }
+    .podium__col--1.is-up .podium__name { color: #f0c24a; text-shadow: 0 0 24px rgba(240, 194, 74, 0.6); }
+    .podium__close { position: absolute; top: 1rem; right: 1rem; }
+    .confetti { position: absolute; top: -20px; width: 10px; height: 16px; pointer-events: none; animation: fall linear forwards; }
+    @keyframes fall {
+      to { transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
     @media (max-width: 600px) {
       .col-seen { display: none; }
       th, td { padding: 0.5rem; }
@@ -77,7 +181,13 @@
     <header>
       <h1>Live Scores</h1>
       <span class="meta" id="meta" aria-live="polite"></span>
-      <button type="button" class="btn-danger" id="btn-reset" hidden>Reset board</button>
+      <div class="controls" id="controls" hidden>
+        <button type="button" class="btn-primary" id="btn-podium">Reveal winners</button>
+        <button type="button" id="btn-projector" aria-pressed="false">Projector mode</button>
+        <button type="button" class="admin-only" id="btn-csv-teams">Export standings</button>
+        <button type="button" class="admin-only" id="btn-csv-questions">Export questions</button>
+        <button type="button" class="btn-danger admin-only" id="btn-reset">Reset board</button>
+      </div>
     </header>
 
     <form id="login" hidden>
@@ -85,37 +195,99 @@
       <button type="submit">Open</button>
     </form>
 
-    <table id="board" hidden>
-      <thead>
-        <tr><th>#</th><th>Group</th><th>Score</th><th>Progress</th><th>Status</th><th class="col-seen">Updated</th></tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
+    <div id="dashboard" hidden>
+      <section class="panel" aria-labelledby="h-standings">
+        <div class="panel__head"><h2 id="h-standings">Standings</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Group</th><th>Score</th><th>Progress</th><th>Status</th><th class="col-seen">Updated</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="panel" aria-labelledby="h-cats">
+          <div class="panel__head">
+            <h2 id="h-cats">Category accuracy</h2>
+            <p class="panel__note">Solved on first try, whole room</p>
+          </div>
+          <div class="cats" id="cats"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="h-hard">
+          <div class="panel__head">
+            <h2 id="h-hard">Hardest questions</h2>
+            <label class="toggle admin-only"><input type="checkbox" id="show-answers"> Show answers</label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Question</th><th>First try</th><th>Avg wrong</th><th>Timeouts</th></tr>
+              </thead>
+              <tbody id="hard"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
   </main>
 
+  <div class="podium" id="podium" role="dialog" aria-modal="true" aria-labelledby="podium-title" hidden>
+    <button type="button" class="podium__close" id="podium-close">Close</button>
+    <h2 class="podium__title" id="podium-title">The Vault Champions</h2>
+    <p class="podium__drum" id="podium-drum">And the winner is…</p>
+    <div class="podium__stage" id="podium-stage"></div>
+  </div>
+
+  <script src="js/questions.js"></script>
   <script>
     (function () {
       "use strict";
 
       const POLL_MS = 3000;
       const IDLE_MS = 2 * 60 * 1000;
+      const MOVE_SHOW_MS = 15000;
+      const HARDEST_LIMIT = 10;
       const TOKEN_KEY = "vault-admin-token";
+      const CONFETTI_COLORS = ["#f0c24a", "#3dd68c", "#59c2ff", "#e05a62", "#ebe8e1"];
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+      const $ = function (id) { return document.getElementById(id); };
       const els = {
-        meta: document.getElementById("meta"),
-        reset: document.getElementById("btn-reset"),
-        login: document.getElementById("login"),
-        token: document.getElementById("token"),
-        board: document.getElementById("board"),
-        rows: document.getElementById("rows")
+        meta: $("meta"),
+        controls: $("controls"),
+        login: $("login"),
+        token: $("token"),
+        dashboard: $("dashboard"),
+        rows: $("rows"),
+        cats: $("cats"),
+        hard: $("hard"),
+        showAnswers: $("show-answers"),
+        projector: $("btn-projector"),
+        podium: $("podium"),
+        podiumStage: $("podium-stage"),
+        podiumDrum: $("podium-drum")
       };
+
+      // Question lookup from the game's own content: id → { question, chamber }.
+      const chambers = (window.GAME_DATA && window.GAME_DATA.chambers) || [];
+      const questionIndex = {};
+      chambers.forEach(function (chamber) {
+        chamber.questions.forEach(function (q) {
+          questionIndex[q.id] = { question: q, chamber: chamber };
+        });
+      });
+
       let pollId = null;
       let token = "";
       try { token = sessionStorage.getItem(TOKEN_KEY) || ""; } catch (_e) {}
-
-      function getToken() {
-        return token;
-      }
+      let latest = { teams: [], questions: {} };
+      let prevRanks = null;
+      const moves = {};
+      let podiumTimers = [];
 
       function setToken(value) {
         token = value;
@@ -131,7 +303,7 @@
       }
 
       function api(method) {
-        return fetch("/api/score", { method: method, headers: { "x-admin-token": getToken() }, cache: "no-store" })
+        return fetch("/api/score", { method: method, headers: { "x-admin-token": token }, cache: "no-store" })
           .then(function (res) {
             if (res.status === 401) {
               showLogin("Wrong admin token.");
@@ -153,39 +325,100 @@
         return Math.floor(s / 3600) + "h ago";
       }
 
-      function cell(row, text, className) {
-        const td = document.createElement("td");
-        if (className) td.className = className;
-        td.textContent = text;
-        row.appendChild(td);
-        return td;
+      function pct(n) {
+        return Math.round(n * 100) + "%";
       }
 
-      function render(teams) {
-        teams.sort(function (a, b) { return b.score - a.score || a.updated - b.updated; });
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+
+      function cell(row, text, className) {
+        return row.appendChild(el("td", className, text));
+      }
+
+      function bar(ratio) {
+        const wrap = el("div", "bar");
+        const fill = wrap.appendChild(el("span"));
+        fill.style.width = Math.max(0, Math.min(100, ratio * 100)) + "%";
+        return wrap;
+      }
+
+      function emptyRow(tbody, cols, text) {
+        const tr = el("tr");
+        cell(tr, text, "empty").colSpan = cols;
+        tbody.appendChild(tr);
+      }
+
+      function rankedTeams() {
+        return latest.teams.slice().sort(function (a, b) {
+          return b.score - a.score || a.updated - b.updated;
+        });
+      }
+
+      function formatAnswer(q) {
+        if (q.type === "fill") return (q.answers || [q.answer])[0];
+        if (Array.isArray(q.correct)) {
+          return q.correct.map(function (i) { return q.options[i]; }).join("; ");
+        }
+        return q.options[q.correct];
+      }
+
+      // Every question with stats, hardest first (lowest first-try rate, then most wrong tries).
+      function questionRows() {
+        return Object.keys(latest.questions)
+          .filter(function (id) { return latest.questions[id].seen > 0; })
+          .map(function (id) {
+            const s = latest.questions[id];
+            const info = questionIndex[id];
+            return {
+              id: id,
+              text: info ? info.question.text : id,
+              category: info ? info.chamber.name : "Unknown",
+              answer: info ? formatAnswer(info.question) : "",
+              seen: s.seen,
+              firstRate: s.first / s.seen,
+              avgWrong: s.wrong / s.seen,
+              timeouts: s.timeout
+            };
+          })
+          .sort(function (a, b) {
+            return a.firstRate - b.firstRate || b.avgWrong - a.avgWrong || b.timeouts - a.timeouts;
+          });
+      }
+
+      function renderStandings() {
+        const teams = rankedTeams();
+        const now = Date.now();
+        const ranks = {};
         els.rows.innerHTML = "";
 
-        if (!teams.length) {
-          const tr = document.createElement("tr");
-          const td = cell(tr, "No teams yet — scores appear once a group starts its mission.", "empty");
-          td.colSpan = 6;
-          els.rows.appendChild(tr);
-        }
+        if (!teams.length) emptyRow(els.rows, 6, "No teams yet — scores appear once a group starts its mission.");
 
-        const now = Date.now();
         teams.forEach(function (t, i) {
-          const tr = document.createElement("tr");
-          cell(tr, "#" + (i + 1), "num rank");
+          const rank = i + 1;
+          ranks[t.id] = rank;
+          if (prevRanks && prevRanks[t.id] && prevRanks[t.id] !== rank) {
+            moves[t.id] = { delta: prevRanks[t.id] - rank, until: now + MOVE_SHOW_MS, fresh: true };
+          }
+          const move = moves[t.id] && moves[t.id].until > now ? moves[t.id] : null;
+
+          const tr = el("tr");
+          if (move && move.fresh && move.delta > 0) tr.className = "overtake";
+          if (move) move.fresh = false;
+
+          const rankCell = cell(tr, "#" + rank, "num rank");
+          if (move) {
+            const up = move.delta > 0;
+            const arrow = rankCell.appendChild(el("span", "move move--" + (up ? "up" : "down"), (up ? "▲" : "▼") + Math.abs(move.delta)));
+            arrow.setAttribute("aria-label", (up ? "up " : "down ") + Math.abs(move.delta));
+          }
           cell(tr, t.group, "group");
           cell(tr, String(t.score), "num score");
-
-          const progress = cell(tr, t.answered + " / " + t.total, "num");
-          const bar = document.createElement("div");
-          bar.className = "bar";
-          const fill = document.createElement("span");
-          fill.style.width = (t.total ? Math.min(100, (t.answered / t.total) * 100) : 0) + "%";
-          bar.appendChild(fill);
-          progress.appendChild(bar);
+          cell(tr, t.answered + " / " + t.total, "num").appendChild(bar(t.total ? t.answered / t.total : 0));
 
           const idle = t.status === "playing" && now - t.updated > IDLE_MS;
           const status = idle ? "idle" : t.status;
@@ -194,13 +427,65 @@
           els.rows.appendChild(tr);
         });
 
+        prevRanks = ranks;
         const playing = teams.filter(function (t) { return t.status === "playing"; }).length;
         setMeta(teams.length + " teams · " + playing + " playing · updated " + new Date().toLocaleTimeString());
       }
 
+      function renderCategories() {
+        els.cats.innerHTML = "";
+        chambers.forEach(function (chamber) {
+          let seen = 0;
+          let first = 0;
+          chamber.questions.forEach(function (q) {
+            const s = latest.questions[q.id];
+            if (s) { seen += s.seen; first += s.first; }
+          });
+          const box = el("div", "cat");
+          box.style.setProperty("--cat-color", chamber.wireColor || "var(--accent)");
+          const row = box.appendChild(el("div", "cat__row"));
+          row.appendChild(el("span", "cat__name", chamber.name.replace(" Chamber", "")));
+          row.appendChild(el("span", "cat__pct", seen ? pct(first / seen) : "—"));
+          box.appendChild(bar(seen ? first / seen : 0));
+          box.appendChild(el("div", "cat__sub", seen + " answers"));
+          els.cats.appendChild(box);
+        });
+      }
+
+      function renderHardest() {
+        const rows = questionRows()
+          .filter(function (r) { return r.firstRate < 1; })
+          .slice(0, HARDEST_LIMIT);
+        els.hard.innerHTML = "";
+        if (!rows.length) emptyRow(els.hard, 4, "No missed questions yet.");
+
+        rows.forEach(function (r) {
+          const tr = el("tr");
+          const qCell = cell(tr, null, "q__text");
+          qCell.appendChild(document.createTextNode(r.text));
+          qCell.appendChild(el("span", "q__cat", r.category + " · " + r.id + " · " + r.seen + " teams"));
+          if (els.showAnswers.checked && r.answer) qCell.appendChild(el("span", "q__answer", "Answer: " + r.answer));
+
+          const level = r.firstRate < 0.4 ? "bad" : r.firstRate < 0.7 ? "mid" : "good";
+          cell(tr, pct(r.firstRate), "num pct--" + level);
+          cell(tr, r.avgWrong.toFixed(1), "num");
+          cell(tr, String(r.timeouts), "num");
+          els.hard.appendChild(tr);
+        });
+      }
+
+      function render() {
+        renderStandings();
+        renderCategories();
+        renderHardest();
+      }
+
       function poll() {
         api("GET")
-          .then(function (data) { render(data.teams || []); })
+          .then(function (data) {
+            latest = { teams: data.teams || [], questions: data.questions || {} };
+            render();
+          })
           .catch(function (err) { if (err) setMeta("Couldn't refresh: " + err.message, true); });
       }
 
@@ -208,37 +493,166 @@
         clearInterval(pollId);
         pollId = null;
         setToken("");
-        els.board.hidden = true;
-        els.reset.hidden = true;
+        els.dashboard.hidden = true;
+        els.controls.hidden = true;
         els.login.hidden = false;
         setMeta(message || "Enter the admin token to view live scores.", Boolean(message));
         els.token.focus();
       }
 
-      function showBoard() {
+      function showDashboard() {
         els.login.hidden = true;
-        els.board.hidden = false;
-        els.reset.hidden = false;
+        els.dashboard.hidden = false;
+        els.controls.hidden = false;
         poll();
         clearInterval(pollId);
         pollId = setInterval(poll, POLL_MS);
       }
 
+      // ---- CSV export ----
+      function csvCell(value) {
+        let s = value == null ? "" : String(value);
+        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheet formula injection from group names
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+
+      function downloadCsv(name, header, rows) {
+        const text = [header].concat(rows).map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
+        const url = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" }));
+        const a = el("a");
+        a.href = url;
+        a.download = name + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }
+
+      $("btn-csv-teams").addEventListener("click", function () {
+        downloadCsv("vault-standings",
+          ["Rank", "Group", "Score", "Answered", "Total", "Status", "Last update"],
+          rankedTeams().map(function (t, i) {
+            return [i + 1, t.group, t.score, t.answered, t.total, t.status, new Date(t.updated).toISOString()];
+          }));
+      });
+
+      $("btn-csv-questions").addEventListener("click", function () {
+        downloadCsv("vault-questions",
+          ["Question ID", "Category", "Question", "Answer", "Teams", "First try %", "Avg wrong tries", "Timeouts"],
+          questionRows().map(function (r) {
+            return [r.id, r.category, r.text, r.answer, r.seen, Math.round(r.firstRate * 100), r.avgWrong.toFixed(2), r.timeouts];
+          }));
+      });
+
+      // ---- Projector mode ----
+      function setProjector(on) {
+        document.body.classList.toggle("projector", on);
+        els.projector.setAttribute("aria-pressed", String(on));
+        els.projector.textContent = on ? "Exit projector" : "Projector mode";
+      }
+
+      els.projector.addEventListener("click", function () {
+        const on = !document.body.classList.contains("projector");
+        setProjector(on);
+        if (on && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(function () {});
+        } else if (!on && document.fullscreenElement) {
+          document.exitFullscreen().catch(function () {});
+        }
+      });
+
+      document.addEventListener("fullscreenchange", function () {
+        if (!document.fullscreenElement) setProjector(false);
+      });
+
+      // ---- Podium ----
+      function podiumColumn(team, place) {
+        const col = el("div", "podium__col podium__col--" + place);
+        const who = col.appendChild(el("div", "podium__who"));
+        who.appendChild(el("div", "podium__name", team ? team.group : "—"));
+        who.appendChild(el("div", "podium__score", team ? team.score + " pts" : ""));
+        col.appendChild(el("div", "podium__block", String(place)));
+        return col;
+      }
+
+      function confetti() {
+        if (reducedMotion) return;
+        for (let i = 0; i < 140; i++) {
+          const piece = el("span", "confetti");
+          piece.style.left = Math.random() * 100 + "%";
+          piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+          piece.style.animationDuration = 2.5 + Math.random() * 2.5 + "s";
+          piece.style.animationDelay = Math.random() * 0.8 + "s";
+          piece.style.setProperty("--drift", (Math.random() - 0.5) * 300 + "px");
+          piece.style.setProperty("--spin", (Math.random() - 0.5) * 1440 + "deg");
+          els.podium.appendChild(piece);
+        }
+      }
+
+      function openPodium() {
+        const top = rankedTeams().slice(0, 3);
+        if (!top.length) {
+          setMeta("No teams yet — nothing to reveal.", true);
+          return;
+        }
+        closePodium();
+        const cols = { 1: podiumColumn(top[0], 1), 2: podiumColumn(top[1], 2), 3: podiumColumn(top[2], 3) };
+        // Visual order: 2nd, 1st, 3rd.
+        els.podiumStage.append(cols[2], cols[1], cols[3]);
+        els.podium.hidden = false;
+        $("podium-close").focus();
+
+        const steps = reducedMotion
+          ? [[0, function () { [1, 2, 3].forEach(function (p) { cols[p].classList.add("is-up"); }); }]]
+          : [
+              [600, function () { cols[3].classList.add("is-up"); }],
+              [2200, function () { cols[2].classList.add("is-up"); }],
+              [3800, function () { els.podiumDrum.classList.add("is-on"); }],
+              [6300, function () {
+                els.podiumDrum.classList.remove("is-on");
+                cols[1].classList.add("is-up");
+                confetti();
+              }]
+            ];
+        podiumTimers = steps.map(function (s) { return setTimeout(s[1], s[0]); });
+      }
+
+      function closePodium() {
+        podiumTimers.forEach(clearTimeout);
+        podiumTimers = [];
+        els.podium.hidden = true;
+        els.podiumStage.innerHTML = "";
+        els.podiumDrum.classList.remove("is-on");
+        els.podium.querySelectorAll(".confetti").forEach(function (c) { c.remove(); });
+      }
+
+      $("btn-podium").addEventListener("click", openPodium);
+      $("podium-close").addEventListener("click", function () {
+        closePodium();
+        $("btn-podium").focus();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !els.podium.hidden) closePodium();
+      });
+
+      // ---- Misc controls ----
+      els.showAnswers.addEventListener("change", renderHardest);
+
       els.login.addEventListener("submit", function (event) {
         event.preventDefault();
         setToken(els.token.value.trim());
         els.token.value = "";
-        showBoard();
+        showDashboard();
       });
 
-      els.reset.addEventListener("click", function () {
-        if (!confirm("Clear every team's score from the live board?")) return;
+      $("btn-reset").addEventListener("click", function () {
+        if (!confirm("Clear every team's score and all question stats?")) return;
         api("DELETE")
-          .then(poll)
+          .then(function () { prevRanks = null; poll(); })
           .catch(function (err) { if (err) setMeta("Reset failed: " + err.message, true); });
       });
 
-      if (getToken()) showBoard();
+      if (token) showDashboard();
       else showLogin();
     })();
   </script>

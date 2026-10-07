@@ -47,7 +47,15 @@ sessionStorage.removeItem("vault-access-ok"); location.reload();
 | **Participants** | `https://governance-workshop-escape-room.vercel.app` |
 | **Admin** (live scores) | `https://governance-workshop-escape-room.vercel.app/admin.html` |
 
-Debrief (answer + justification) always shows after each question. Participants never see other teams' scores. The **admin page** shows every team's live score, progress and status, refreshing every 3 seconds. It asks for the admin token (the `ADMIN_TOKEN` env var, separate from the workshop token). Practice runs are not reported. **Reset board** clears all teams; scores also expire 24h after the last update.
+Debrief (answer + justification) always shows after each question. Participants never see other teams' scores. The **admin page** shows every team's live score, progress and status, refreshing every 3 seconds. It asks for the admin token (the `ADMIN_TOKEN` env var, separate from the workshop token). Practice runs are not reported. **Reset board** clears all teams and question stats; both also expire 24h after the last update.
+
+Admin page features:
+- **Standings** with rank-change arrows and a highlight when a team overtakes another
+- **Category accuracy**: room-wide % solved on first try, per manual
+- **Hardest questions**: top 10 by first-try rate, wrong tries and timeouts (answers hidden until you tick *Show answers*)
+- **Reveal winners**: animated podium (3rd → 2nd → drumroll → 1st + confetti)
+- **Projector mode**: fullscreen, larger text, hides admin-only controls and answers
+- **Export standings / questions** as CSV
 
 ---
 

@@ -1,7 +1,10 @@
 /**
- * Live scores for the admin page, stored in one Upstash Redis hash (field = team id).
- *   POST   — game reports a team's score (public)
- *   GET    — admin reads all teams   (header x-admin-token)
+ * Live scores for the admin page, stored in Upstash Redis:
+ *   vault:scores    hash, field = team id, value = JSON entry
+ *   vault:questions hash of counters, field = "<question id>|seen|wrong|timeout|first"
+ *
+ *   POST   — game reports a team's score, optionally with one finished question (public)
+ *   GET    — admin reads all teams + question stats (header x-admin-token)
  *   DELETE — admin clears the board  (header x-admin-token)
  *
  * Env: ADMIN_TOKEN, plus the Upstash REST vars that the Vercel integration sets
@@ -10,6 +13,7 @@
 const crypto = require("crypto");
 
 const KEY = "vault:scores";
+const Q_KEY = "vault:questions";
 const TTL_SECONDS = 60 * 60 * 24;
 const STATUSES = ["playing", "finished"];
 
@@ -55,6 +59,37 @@ function cleanEntry(body) {
   };
 }
 
+// One finished question: how many wrong tries, whether it timed out, whether it was solved.
+function cleanQuestion(q) {
+  if (!q || typeof q !== "object") return null;
+  const id = String(q.id || "");
+  if (!/^[a-z0-9-]{1,40}$/i.test(id)) return null;
+  const wrong = int(q.wrong, 50);
+  const solved = q.correct === true;
+  return { id: id, wrong: wrong, timeout: q.timedOut === true ? 1 : 0, first: solved && wrong === 0 ? 1 : 0 };
+}
+
+function questionCommands(q) {
+  return [
+    ["HINCRBY", Q_KEY, q.id + "|seen", 1],
+    ["HINCRBY", Q_KEY, q.id + "|wrong", q.wrong],
+    ["HINCRBY", Q_KEY, q.id + "|timeout", q.timeout],
+    ["HINCRBY", Q_KEY, q.id + "|first", q.first],
+    ["EXPIRE", Q_KEY, TTL_SECONDS]
+  ];
+}
+
+// Flat HGETALL reply ["py-1|seen", "3", ...] → { "py-1": { seen: 3, ... } }
+function parseQuestionStats(flat) {
+  const stats = {};
+  for (let i = 0; i + 1 < (flat || []).length; i += 2) {
+    const [id, field] = flat[i].split("|");
+    stats[id] = stats[id] || { seen: 0, wrong: 0, timeout: 0, first: 0 };
+    stats[id][field] = Number(flat[i + 1]) || 0;
+  }
+  return stats;
+}
+
 module.exports = async function handler(req, res) {
   if (!REDIS_URL || !REDIS_TOKEN) {
     return res.status(500).json({ error: "Upstash Redis is not configured" });
@@ -64,24 +99,25 @@ module.exports = async function handler(req, res) {
     if (req.method === "POST") {
       const entry = cleanEntry(req.body);
       if (!entry) return res.status(400).json({ error: "Invalid score" });
+      const question = cleanQuestion(req.body.question);
       await redis([
         ["HSET", KEY, entry.id, JSON.stringify(entry)],
         ["EXPIRE", KEY, TTL_SECONDS]
-      ]);
+      ].concat(question ? questionCommands(question) : []));
       return res.status(204).end();
     }
 
     if (!isAdmin(req)) return res.status(401).json({ error: "Admin token required" });
 
     if (req.method === "GET") {
-      const [{ result }] = await redis([["HVALS", KEY]]);
-      const teams = (result || []).map(function (raw) { return JSON.parse(raw); });
+      const [scores, questions] = await redis([["HVALS", KEY], ["HGETALL", Q_KEY]]);
+      const teams = (scores.result || []).map(function (raw) { return JSON.parse(raw); });
       res.setHeader("Cache-Control", "no-store");
-      return res.status(200).json({ teams: teams });
+      return res.status(200).json({ teams: teams, questions: parseQuestionStats(questions.result) });
     }
 
     if (req.method === "DELETE") {
-      await redis([["DEL", KEY]]);
+      await redis([["DEL", KEY, Q_KEY]]);
       return res.status(204).end();
     }
 

@@ -28,6 +28,7 @@
     reviewTimeLeft: 0,
     mode: "full",
     playerName: "Specialist",
+    wrongAttempts: 0,
     lastTickSecond: -1
   };
 
@@ -393,7 +394,8 @@
   }
 
   // Fire-and-forget report to the admin live board; never blocks the game.
-  function reportScore(status) {
+  // `question` (optional) is one finished question for the admin's hardest-questions stats.
+  function reportScore(status, question) {
     if (isPractice() || !window.fetch) return;
     fetch("/api/score", {
       method: "POST",
@@ -404,7 +406,8 @@
         score: state.totalScore,
         answered: state.answers.length,
         total: state.deck.length,
-        status: status || "playing"
+        status: status || "playing",
+        question: question
       }),
       keepalive: true
     }).catch(function () {});
@@ -550,6 +553,7 @@
     const qType = getQuestionType(question);
     state.locked = false;
     state.awaitingContinue = false;
+    state.wrongAttempts = 0;
     state.resolvingQuestion = false;
 
     if (window.BombWidget) {
@@ -784,7 +788,12 @@
       points: pts.total,
       response: response
     });
-    reportScore();
+    reportScore("playing", {
+      id: question.id,
+      wrong: state.wrongAttempts,
+      correct: correct,
+      timedOut: timedOut
+    });
 
     return {
       correct: correct,
@@ -1015,6 +1024,7 @@
     const deducted = Math.min(WRONG_PENALTY_POINTS, state.totalScore);
     state.totalScore -= deducted;
     state.chamberScores[chamber.id] -= deducted;
+    state.wrongAttempts += 1;
     reportScore();
     if (window.GameUI) GameUI.animateScore(els.hudScore, state.totalScore);
     else els.hudScore.textContent = String(state.totalScore);
