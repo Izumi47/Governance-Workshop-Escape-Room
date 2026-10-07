@@ -6,7 +6,7 @@
  * - fill: text with ___ blank + answers[] (accepted variants, case-insensitive)
  * - checkbox: options[] + correct ([0-based indices]) — select all that apply
  *
- * Total timeLimit across all questions: 1200s (20 minutes). Each: 30s.
+ * Each question: 45s (40 questions = 30 minutes max).
  */
 window.GAME_DATA = {
   title: "The Data Governance Vault",
@@ -55,7 +55,7 @@ window.GAME_DATA = {
             "So packages can be installed without a dependency file"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The standard is designed for projects that may later be maintained by users with limited Python experience."
         },
@@ -70,7 +70,7 @@ window.GAME_DATA = {
             "Only experimental notebooks that never leave a personal laptop"
           ],
           correct: [0, 1, 2],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "It covers Finance Python scripts, scheduled/desktop tools, and solutions feeding Finance, Power BI, or other business processes."
         },
@@ -84,7 +84,7 @@ window.GAME_DATA = {
             "External contractor as sole owner"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Mandatory requirements include a named primary owner, backup owner, and line manager."
         },
@@ -93,7 +93,7 @@ window.GAME_DATA = {
           type: "fill",
           text: "Every Python project must include a dependency file such as ___.",
           answers: ["requirements.txt", "requirements", "a requirements.txt"],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "A dependency file such as requirements.txt is mandatory before go-live."
         },
@@ -107,7 +107,7 @@ window.GAME_DATA = {
             "They are required for SharePoint uploads"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Hard-coded user-specific paths are not allowed in production code."
         },
@@ -121,7 +121,7 @@ window.GAME_DATA = {
             "Only in an approved secrets store"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Do not store passwords, tokens, or secrets directly in code or documentation."
         },
@@ -136,7 +136,7 @@ window.GAME_DATA = {
             "Any Python version is fine if it runs once on the author's machine"
           ],
           correct: [0, 1, 2],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Document the Python version, ship a reproducible dependency file, and have setup tested by someone else where practical."
         },
@@ -150,7 +150,7 @@ window.GAME_DATA = {
             "Personal OneDrive shortcuts only"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Triggers, schedules, runtime expectations, outputs, failure points, and recovery steps must be documented."
         },
@@ -164,7 +164,7 @@ window.GAME_DATA = {
             "Nothing — verbal handover is enough"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Docs must let a backup owner install, run, understand dependencies, check outputs, and resolve common errors."
         },
@@ -179,7 +179,7 @@ window.GAME_DATA = {
             "Hard-coded personal paths remain undocumented in production"
           ],
           correct: [0, 1, 2],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Acceptance requires named owners, complete SharePoint evidence, completed handover, and removal or controlled justification of personal paths."
         }
@@ -203,7 +203,7 @@ window.GAME_DATA = {
             "Ban documentation for calculated measures"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Every report, dataset, semantic model, and dashboard must be understandable and maintainable by another team member."
         },
@@ -218,7 +218,7 @@ window.GAME_DATA = {
             "Solutions with Power Automate or Power Apps dependencies"
           ],
           correct: [0, 1, 2, 3],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "It covers reports, dashboards, datasets/semantic models, department workspace content, and Power Automate/Apps dependencies."
         },
@@ -232,7 +232,7 @@ window.GAME_DATA = {
             "Documented departmental data platforms"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Local storage, personal OneDrive folders, and Box must not be the primary governed production dependency."
         },
@@ -241,7 +241,7 @@ window.GAME_DATA = {
           type: "fill",
           text: "___ is on hold unless separately approved as a Power BI data source.",
           answers: ["Dataverse", "Microsoft Dataverse"],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Dataverse is on hold unless separately approved."
         },
@@ -256,7 +256,7 @@ window.GAME_DATA = {
             "Row-level security design, if used"
           ],
           correct: [0, 1, 2, 3],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Document sources, tables, transformations, measures/columns, relationships/assumptions, and RLS if used."
         },
@@ -270,7 +270,7 @@ window.GAME_DATA = {
             "A local .pbix left on a desktop"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Content must be published in the approved department workspace."
         },
@@ -284,7 +284,7 @@ window.GAME_DATA = {
             "Only the author's personal email nickname"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Refresh ownership and contact details must be recorded."
         },
@@ -298,7 +298,7 @@ window.GAME_DATA = {
             "Local CSV files replace all governed sources"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Docs must cover purpose, sources, refresh ownership, access, checks when numbers look wrong, and recovery from common failures."
         },
@@ -312,7 +312,7 @@ window.GAME_DATA = {
             "Unsigned draft with no approval evidence"
           ],
           correct: 1,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "SharePoint must include the completed docs and the latest approved .pbix (or managed source reference)."
         },
@@ -327,7 +327,7 @@ window.GAME_DATA = {
             "SharePoint is complete, approvals retained, and handover completed"
           ],
           correct: [0, 1, 2, 3],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The minimum acceptance checklist requires ownership, full model docs, publish/refresh documentation, SharePoint completeness, approvals, and handover."
         }
@@ -351,7 +351,7 @@ window.GAME_DATA = {
             "Limit governance to the day the solution is deployed"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "ALM governance helps ensure Power Platform solutions are secure, compliant, scalable, and ready for deployment."
         },
@@ -365,7 +365,7 @@ window.GAME_DATA = {
             "One shared environment only"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck defines the standard pathway as DEV for development, UAT for testing, then PROD for full deployment."
         },
@@ -379,7 +379,7 @@ window.GAME_DATA = {
             "Choose the database only after production deployment"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck frames database selection around user count, data volume, and whether the solution uses external data, with SharePoint List and Dataverse as the main choices."
         },
@@ -393,7 +393,7 @@ window.GAME_DATA = {
             "A private chat with no recorded request"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck routes new idea, environment access, and solution review requests through the LCNC C4E Empower Suite."
         },
@@ -409,7 +409,7 @@ window.GAME_DATA = {
             "An unapproved personal workspace name"
           ],
           correct: [0, 1, 2, 3],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The environment access form asks for the business case, criticality, Power Platform component, and additional contacts."
         },
@@ -424,7 +424,7 @@ window.GAME_DATA = {
             "One global role that gives every user organisation-wide access"
           ],
           correct: [0, 1, 2],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Dataverse governance requires appropriate table security roles, configured privileges/access levels/role depth, and controlled assignment to users or teams."
         },
@@ -438,7 +438,7 @@ window.GAME_DATA = {
             "Only when no data leaves the Office 365 environment"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck marks TIA as applicable to external data when EU/UK personal data is shared with a third party outside AstraZeneca."
         },
@@ -452,7 +452,7 @@ window.GAME_DATA = {
             "Keep the project outside Power Apps Solutions until production"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck instructs teams to package projects into a solution and then raise a Solution Review request to Production through the LCNC C4E Empower Suite."
         },
@@ -467,7 +467,7 @@ window.GAME_DATA = {
             "Treat deployment as the end of governance"
           ],
           correct: [0, 1, 2],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "Deployment is not the end: teams should monitor usage, raise minor enhancements or bug fixes, and involve the project owner for major upgrades."
         },
@@ -481,7 +481,7 @@ window.GAME_DATA = {
             "Power BI-only governance requirements"
           ],
           correct: 0,
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
           explain: "The deck states that Power Automate flows must follow structured ALM and ownership rules too."
         }
@@ -498,134 +498,137 @@ window.GAME_DATA = {
         {
           id: "sop-1",
           type: "fill",
-          text: "Before go-live, projects need an ___ governance reference or approved intake record.",
+          text: "All digital projects require a unique ID for identification, record and governance reference. This ID is called ___.",
           answers: ["IdeAZ", "ideaz"],
-          timeLimit: 30,
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Every project needs an IdeAZ governance reference or approved intake record."
+          explain: "IdeAZ is the unique ID used as the governance reference for every digital project."
         },
         {
           id: "sop-2",
-          text: "Which approvals are required before go-live?",
+          type: "checkbox",
+          text: "Which of the following content(s) is/are NOT required in the technical SOP? (Select all that apply)",
           options: [
-            "Line manager approval and SOP or applicable process-team approval",
-            "Only a peer Slack reaction",
-            "Only the author's self-approval",
-            "No approval if the file is small"
+            "User Guide",
+            "Technical Guide",
+            "Approval supporting document",
+            "Business Continuity Plan"
           ],
-          correct: 0,
-          timeLimit: 30,
+          correct: [0, 2],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Line manager approval and SOP or applicable process-team approval are mandatory."
+          explain: "The User Guide and approval supporting documents are not required in the technical SOP."
         },
         {
           id: "sop-3",
-          text: "What is the official governance record for a project?",
+          type: "checkbox",
+          text: "What are the example required documentation for Python documentation? (Select all that apply)",
           options: [
-            "The SharePoint project folder",
-            "A private chat thread",
-            "An undocumented desktop folder",
-            "A sticky note on a monitor"
+            "Preinstallation of library and packages",
+            "Recording of the process",
+            "Details of input files",
+            "Expected output files"
           ],
-          correct: 0,
-          timeLimit: 30,
+          correct: [0, 2, 3],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "The SharePoint folder is the official governance record for the project."
+          explain: "Python documentation covers library/package preinstallation, input file details, and expected output files."
         },
         {
           id: "sop-4",
-          text: "How must the SharePoint project folder be created?",
+          type: "checkbox",
+          text: "What are the example required documentation for PowerBI documentation? (Select all that apply)",
           options: [
-            "Using the department standard",
-            "With any ad-hoc name the author prefers",
-            "Only inside personal OneDrive",
-            "Without a documentation file"
+            "Step by step explanation of the overall PowerBI interface",
+            "Explanation of measures created",
+            "List of relationships",
+            "Documentation of tables"
           ],
-          correct: 0,
-          timeLimit: 30,
+          correct: [1, 2, 3],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "A SharePoint project folder must be created using the department standard."
+          explain: "PowerBI documentation covers measures, relationships, and tables — not a walkthrough of the interface."
         },
         {
           id: "sop-5",
           type: "checkbox",
-          text: "At minimum, the SharePoint folder must contain or reference: (Select all that apply)",
+          text: "Which of the following statement(s) is/are false? (Select all that apply)",
           options: [
-            "Completed documentation template",
-            "Latest approved source artefacts (code or .pbix / managed location)",
-            "Approval evidence and handover checklist",
-            "Change history or release notes"
+            "The Digital CoE team are the reviewers of the technical SOP",
+            "The line managers are usually the approvers of the technical SOP",
+            "The draft of the technical guide needs to follow 1:1 with the structure of the template given",
+            "All out of scope activities needs to be justified"
           ],
-          correct: [0, 1, 2, 3],
-          timeLimit: 30,
+          correct: [2],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "SharePoint holds docs, approved sources, approvals, handover checklist, and change history/release notes (plus samples/evidence where applicable)."
+          explain: "The draft does not need to follow the template structure 1:1; the other statements are true."
         },
         {
           id: "sop-6",
-          text: "For Python projects, source code must be:",
+          text: "The naming convention for all your digital projects should consist of:",
           options: [
-            "Available in SharePoint or an approved repository with SharePoint reference",
-            "Only on the author's laptop",
-            "Emailed as an untitled attachment",
-            "Hidden from the backup owner"
+            "Digital project name & PIC name",
+            "IdeAZ & PIC name",
+            "It is up to the owner as long as it is saved in the correct folder",
+            "IdeAZ & Digital project name"
           ],
-          correct: 0,
-          timeLimit: 30,
+          correct: 3,
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Source code must be in SharePoint or an approved repository with a SharePoint reference."
+          explain: "Digital projects are named using the IdeAZ and the digital project name."
         },
         {
           id: "sop-7",
-          text: "Before handover, the project owner must confirm that:",
-          options: [
-            "Source artefacts are in SharePoint or properly referenced (and for Power BI, major measures, transformations, and security are documented)",
-            "Nothing is stored centrally",
-            "Only the IdeAZ ticket exists with no artefacts",
-            "Personal Box is the system of record"
-          ],
-          correct: 0,
-          timeLimit: 30,
+          type: "fill",
+          text: "The purpose of a ___ table is to clearly define the responsibilities of relevant activities and promote accountability.",
+          answers: ["RACI", "RACI table"],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Owners must confirm artefacts are stored/referenced and, for Power BI, that major measures, transformations, and security settings are documented."
+          explain: "A RACI table defines responsibilities and promotes accountability."
         },
         {
           id: "sop-8",
-          text: "Approval evidence must be:",
+          text: "Based on BCP tiering, a digital tool whereby a short operational disruption is acceptable, is usually classified as:",
           options: [
-            "Retained",
-            "Deleted after go-live",
-            "Kept only in verbal form",
-            "Optional for Finance projects"
+            "Tier 1 (Mission Critical)",
+            "Tier 2 (Important Tool)",
+            "Tier 3 (Informational Tool)",
+            "Tier 4 (Minimal impact)"
           ],
-          correct: 0,
-          timeLimit: 30,
+          correct: 1,
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Approval evidence is retained as part of minimum acceptance."
+          explain: "Tools that can tolerate a short operational disruption are Tier 2 (Important Tool)."
         },
         {
           id: "sop-9",
-          type: "fill",
-          text: "A completed ___ checklist is required before go-live.",
-          answers: ["handover", "handover checklist"],
-          timeLimit: 30,
+          text: "An example of a digital tool that is normally classified as Tier 3 (Informational Tool) would be:",
+          options: [
+            "Employee payment run related",
+            "Supplier payment flow",
+            "KPI dashboards",
+            "Daily operational trackers"
+          ],
+          correct: 2,
+          timeLimit: 45,
           basePoints: 100,
-          explain: "A completed handover checklist (and support readiness evidence) is mandatory."
+          explain: "KPI dashboards are typically Tier 3 (Informational Tool)."
         },
         {
           id: "sop-10",
           type: "checkbox",
-          text: "Which roles must be named on every governed project? (Select all that apply)",
+          text: "Why is a technical SOP important? (Select all that apply)",
           options: [
-            "Primary owner",
-            "Backup owner",
-            "Line manager",
-            "Anonymous public viewer as owner"
+            "Promote stability and sustainability especially when original owner is no longer around",
+            "Increase transparency and accessibility of the digital tool",
+            "Makes it easier for technical team to troubleshoot and provide support",
+            "Improve governance"
           ],
-          correct: [0, 1, 2],
-          timeLimit: 30,
+          correct: [0, 1, 2, 3],
+          timeLimit: 45,
           basePoints: 100,
-          explain: "Named primary owner, backup owner, and line manager are mandatory for both Python and Power BI projects."
+          explain: "A technical SOP supports stability, transparency, easier support, and better governance."
         }
       ]
     }

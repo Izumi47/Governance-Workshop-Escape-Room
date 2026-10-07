@@ -5,7 +5,7 @@
   const TIME_BONUS_MAX = data.timeBonusMax ?? 50;
   const RING_CIRCUMFERENCE = 97.4;
   const PRACTICE_TIME_MIN = data.practice?.timeLimitMin ?? 90;
-  const WRONG_PENALTY_SECONDS = 5;
+  const WRONG_PENALTY_POINTS = 50;
   const REVIEW_AUTO_CONTINUE_SECONDS = 10;
   const params = new URLSearchParams(window.location.search);
   const startChamberParam = params.get("chamber");
@@ -554,7 +554,7 @@
     els.options.innerHTML = "";
 
     if (isFillQuestion(question)) {
-      els.questionHint.textContent = "Type your answer and press Enter or Submit. Wrong answers cut 5 seconds.";
+      els.questionHint.textContent = "Type your answer and press Enter or Submit. Wrong answers cost 100 points.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -588,7 +588,7 @@
       startTimer(getEffectiveTimeLimit(question));
       focusFillInput(input);
     } else if (isCheckboxQuestion(question)) {
-      els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cut 5 seconds.";
+      els.questionHint.textContent = "Select all that apply. Partial credit if you catch some; wrong picks cost 100 points.";
       els.questionHint.className = "hint";
 
       const form = document.createElement("form");
@@ -629,7 +629,7 @@
       if (window.GameUI) GameUI.staggerOptions(els.options);
       startTimer(getEffectiveTimeLimit(question));
     } else {
-      els.questionHint.textContent = "Choose correctly (keys 1–4). Wrong answers cut 5 seconds.";
+      els.questionHint.textContent = "Choose correctly (keys 1–4). Wrong answers cost 100 points.";
       els.questionHint.className = "hint";
       renderChoiceOptions(question);
       showScreen("question");
@@ -991,14 +991,12 @@
   }
 
   function applyWrongPenalty() {
-    state.timeLeft = Math.max(0, state.timeLeft - WRONG_PENALTY_SECONDS);
-    updateTimerDisplay();
-    if (state.timeLeft <= 0) {
-      clearTimer();
-      handleQuestionTimeout();
-      return true;
-    }
-    return false;
+    const chamber = getChamber();
+    const deducted = Math.min(WRONG_PENALTY_POINTS, state.totalScore);
+    state.totalScore -= deducted;
+    state.chamberScores[chamber.id] -= deducted;
+    if (window.GameUI) GameUI.animateScore(els.hudScore, state.totalScore);
+    else els.hudScore.textContent = String(state.totalScore);
   }
 
   function handleWrongChoice(question, selectedIndex) {
@@ -1008,20 +1006,20 @@
       btn.disabled = true;
     }
     if (window.GameSounds) GameSounds.wrong();
-    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Try again.";
+    els.questionHint.textContent = "Incorrect — −" + WRONG_PENALTY_POINTS + " pts. Try again.";
     els.questionHint.className = "hint hint--danger";
 
-    if (applyWrongPenalty()) return;
+    applyWrongPenalty();
     unlockQuestionInputs();
   }
 
   function handleWrongFill(question) {
     highlightFillInput(false);
     if (window.GameSounds) GameSounds.wrong();
-    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Try again.";
+    els.questionHint.textContent = "Incorrect — −" + WRONG_PENALTY_POINTS + " pts. Try again.";
     els.questionHint.className = "hint hint--danger";
 
-    if (applyWrongPenalty()) return;
+    applyWrongPenalty();
 
     const input = els.options.querySelector(".fill-input");
     unlockQuestionInputs();
@@ -1044,10 +1042,10 @@
       }
     });
     if (window.GameSounds) GameSounds.wrong();
-    els.questionHint.textContent = "Incorrect — timer −" + WRONG_PENALTY_SECONDS + "s. Adjust and try again.";
+    els.questionHint.textContent = "Incorrect — −" + WRONG_PENALTY_POINTS + " pts. Adjust and try again.";
     els.questionHint.className = "hint hint--danger";
 
-    if (applyWrongPenalty()) return;
+    applyWrongPenalty();
 
     window.setTimeout(function () {
       if (state.awaitingContinue) return;
