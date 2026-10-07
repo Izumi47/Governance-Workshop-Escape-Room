@@ -224,11 +224,25 @@
           <li><span class="briefing-manuals__swatch" style="--swatch:#f07178"></span> <strong>SOP</strong> — intake, SharePoint, approvals</li>
         </ul>
 
+        <h3 class="briefing-manuals-title">Select All That Apply</h3>
+        <p>For questions with multiple correct answers, select as many correct options as you can.</p>
+        <ul class="briefing-list">
+          <li><strong>All correct answers selected</strong> → full points awarded.</li>
+          <li><strong>Some correct answers selected, with no wrong answers included</strong> → partial points awarded (in proportion to how many you found), and you proceed to the next question.</li>
+          <li><strong>Any wrong answer included</strong> → <strong>50 points deducted</strong>, and you retry with the time remaining.</li>
+        </ul>
+
+        <h3 class="briefing-manuals-title">Scoring &amp; Rules</h3>
         <ul class="briefing-list">
           <li><strong>40 armed modules</strong> — mixed across the four manuals. Progress dots show which manuals you’ve cleared.</li>
-          <li><strong>Wrong answer</strong> deducts <strong>50 points</strong> from your score.</li>
+          <li><strong>Each module has its own timer</strong> (45 seconds in a live run). It keeps running when you answer wrong — a retry does not reset it.</li>
+          <li><strong>Correct answer</strong> earns <strong>100 base points</strong> plus a <strong>speed bonus of up to 50 points</strong> — the more time left, the bigger the bonus.</li>
+          <li><strong>Wrong answer</strong> deducts <strong>50 points</strong> from your score (it never drops below 0). You can retry while time remains.</li>
+          <li><strong>Multiple choice:</strong> a wrong option is crossed out so you can’t pick it again.</li>
+          <li><strong>Type-in answers:</strong> spelling matters, but capital letters and extra spaces don’t.</li>
           <li><strong>Timer hits zero</strong> → that module detonates (0 pts) → next module. The mission continues.</li>
           <li><strong>After each module</strong> — short answer reveal for the room, then Continue (or auto after 10s).</li>
+          <li><strong>Question and answer order is shuffled</strong>, so don’t rely on option positions.</li>
           <li>Tips: keys <kbd>1</kbd>–<kbd>4</kbd> for multiple choice; <kbd>Enter</kbd> to submit.</li>
         </ul>
         <p id="briefing-mode" class="briefing-mode"></p>
